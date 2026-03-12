@@ -1,0 +1,83 @@
+{
+  "$schema": "https://example.invalid/ako/spec/api.schema.json",
+  "basePath": "/api/v1",
+  "style": {
+    "format": "JSON",
+    "pagination": "cursor",
+    "errors": "RFC7807",
+    "auth": [
+      "OAuth2/OIDC (Bearer)",
+      "mTLS (service-to-service optional)"
+    ]
+  },
+  "resources": {
+    "tenants": {
+      "path": "/tenants"
+    },
+    "users": {
+      "path": "/users"
+    },
+    "roles": {
+      "path": "/roles"
+    },
+    "courses": {
+      "path": "/courses"
+    },
+    "cohorts": {
+      "path": "/cohorts"
+    },
+    "groups": {
+      "path": "/courses/{courseId}/groups"
+    },
+    "assignments": {
+      "path": "/assignments"
+    },
+    "quizzes": {
+      "path": "/quizzes"
+    },
+    "gradebook": {
+      "path": "/courses/{courseId}/gradebook"
+    },
+    "forums": {
+      "path": "/forums"
+    },
+    "messages": {
+      "path": "/messages"
+    },
+    "reactions": {
+      "path": "/reactions"
+    },
+    "files": {
+      "path": "/files"
+    },
+    "webhooks": {
+      "path": "/webhooks"
+    },
+    "events": {
+      "path": "/events"
+    },
+    "jobs": {
+      "path": "/jobs"
+    },
+    "lti": {
+      "path": "/lti"
+    },
+    "scim": {
+      "path": "/scim/v2"
+    }
+  },
+  "realtimeChannels": [
+    {
+      "name": "course-updates",
+      "pattern": "course:{courseId}"
+    },
+    {
+      "name": "forum-thread",
+      "pattern": "forum:{forumId}:thread:{threadId}"
+    },
+    {
+      "name": "dm",
+      "pattern": "dm:{conversationId}"
+    }
+  ]
+}

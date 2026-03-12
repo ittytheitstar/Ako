@@ -1,76 +1,28 @@
-name: ako
-services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: ako
-      POSTGRES_PASSWORD: ako
-      POSTGRES_DB: ako
-    ports:
-      - "5432:5432"
-    volumes:
-      - dbdata:/var/lib/postgresql/data
-      - ./db:/docker-entrypoint-initdb.d
+# Ako (scaffold)
 
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
+This folder contains **starter scaffolding** for an LMS project named **Ako**:
 
-  nats:
-    image: nats:2
-    ports:
-      - "4222:4222"
-      - "8222:8222"
+- `spec/` : product + API + DB definition JSON
+- `db/` : PostgreSQL schema + seeds (auto-applied by docker compose)
+- `docker-compose.yml` : local dev stack skeleton (db, redis, nats, api, realtime, web)
 
-  api:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run dev"
-    environment:
-      DATABASE_URL: postgresql://ako:ako@db:5432/ako
-      REDIS_URL: redis://redis:6379
-      NATS_URL: nats://nats:4222
-      PORT: 8080
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./services/api:/app
-    depends_on:
-      - db
-      - redis
-      - nats
+> This is **not** a complete implementation; it is a project starter kit and a set of machine-readable definitions you can feed into GitHub Copilot / agents to generate code consistently.
 
-  realtime:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run dev"
-    environment:
-      NATS_URL: nats://nats:4222
-      REDIS_URL: redis://redis:6379
-      PORT: 8090
-    ports:
-      - "8090:8090"
-    volumes:
-      - ./services/realtime:/app
-    depends_on:
-      - redis
-      - nats
+## Quick start
 
-  web:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run dev"
-    environment:
-      NEXT_PUBLIC_API_BASE: http://localhost:8080/api/v1
-      NEXT_PUBLIC_RT_BASE: ws://localhost:8090
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./apps/web:/app
-    depends_on:
-      - api
-      - realtime
+```bash
+docker compose up -d
+```
 
-volumes:
-  dbdata:
+The API and web apps are placeholders: you still need to create `services/api`, `services/realtime`, and `apps/web`.
+
+## Specs
+
+- `spec/ako.product.json` – product scope
+- `spec/ako.api.json` – API surface patterns
+- `spec/ako.db.json` – DB table inventory
+
+## Database
+
+- `db/001_init.sql` – tables
+- `db/002_seed.sql` – baseline permissions

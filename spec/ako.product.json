@@ -1,0 +1,90 @@
+{
+  "$schema": "https://example.invalid/ako/spec/product.schema.json",
+  "name": "Ako",
+  "tagline": "A modern, real-time, extensible LMS inspired by Moodle",
+  "goals": [
+    "Feature parity with mainstream LMS workflows (courses, enrolments, assessments, grading, forums, messaging)",
+    "Real-time collaboration and engagement (live updates, cohort-scoped reactions, inline feedback)",
+    "API-first architecture with a full REST surface and event stream",
+    "Modern identity: OIDC/SAML SSO, SCIM provisioning, fine-grained RBAC/ABAC",
+    "Extensibility: plugin/extension framework, safe sandboxing, versioned APIs",
+    "Scalable + observable: multi-tenant ready, horizontal scaling, metrics and tracing"
+  ],
+  "non_goals_initial": [
+    "Re-implement every historical Moodle plugin on day one",
+    "A full CMS for public marketing sites",
+    "Video hosting (integrate with Panopto/third-party)"
+  ],
+  "personas": {
+    "student": [
+      "consume content",
+      "submit work",
+      "discuss",
+      "receive feedback",
+      "track progress"
+    ],
+    "teacher": [
+      "design courses",
+      "facilitate",
+      "grade",
+      "communicate",
+      "report"
+    ],
+    "admin": [
+      "manage tenants",
+      "identity",
+      "roles",
+      "catalog",
+      "compliance"
+    ],
+    "integrator": [
+      "LTI tool/provider",
+      "SIS sync",
+      "analytics export",
+      "SCIM"
+    ],
+    "developer": [
+      "build plugins",
+      "theme UI",
+      "extend services"
+    ]
+  },
+  "core_modules": [
+    "Identity & Access (OIDC/SAML, RBAC/ABAC)",
+    "Course authoring & content",
+    "Enrolment & cohorts",
+    "Assessments (assignments/quizzes)",
+    "Gradebook",
+    "Forums & messaging",
+    "Notifications",
+    "Reporting & analytics",
+    "File service",
+    "LTI 1.3 Advantage",
+    "SCIM 2.0",
+    "Import/Migration"
+  ],
+  "realtime": {
+    "transport": [
+      "WebSocket",
+      "SSE"
+    ],
+    "features": [
+      "live forums (typing indicators, live edits)",
+      "inline feedback and comments",
+      "cohort-visible reactions",
+      "teacher-student 1:1 threads",
+      "live grade/status updates"
+    ]
+  },
+  "security": {
+    "baseline": [
+      "OWASP ASVS-aligned",
+      "CSP + SRI",
+      "rate limiting",
+      "audit log",
+      "least privilege",
+      "tenant isolation",
+      "PII minimisation"
+    ]
+  }
+}
