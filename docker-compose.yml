@@ -11,66 +11,96 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ako"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nats:
-    image: nats:2
+    image: nats:2-alpine
+    command: ["--jetstream", "--store_dir=/data"]
     ports:
       - "4222:4222"
       - "8222:8222"
+    volumes:
+      - natsdata:/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run dev"
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
     environment:
       DATABASE_URL: postgresql://ako:ako@db:5432/ako
       REDIS_URL: redis://redis:6379
       NATS_URL: nats://nats:4222
-      PORT: 8080
+      PORT: "8080"
+      JWT_SECRET: dev-secret-change-in-production-32ch
+      NODE_ENV: development
+      LOG_LEVEL: info
+      CORS_ORIGIN: http://localhost:3000
     ports:
       - "8080:8080"
-    volumes:
-      - ./services/api:/app
     depends_on:
-      - db
-      - redis
-      - nats
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
   realtime:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run dev"
+    build:
+      context: .
+      dockerfile: services/realtime/Dockerfile
     environment:
       NATS_URL: nats://nats:4222
       REDIS_URL: redis://redis:6379
-      PORT: 8090
+      JWT_SECRET: dev-secret-change-in-production-32ch
+      PORT: "8090"
+      NODE_ENV: development
     ports:
       - "8090:8090"
-    volumes:
-      - ./services/realtime:/app
     depends_on:
-      - redis
-      - nats
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
 
   web:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm ci && npm run dev"
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
     environment:
       NEXT_PUBLIC_API_BASE: http://localhost:8080/api/v1
       NEXT_PUBLIC_RT_BASE: ws://localhost:8090
+      API_BASE_INTERNAL: http://api:8080/api/v1
     ports:
       - "3000:3000"
-    volumes:
-      - ./apps/web:/app
     depends_on:
-      - api
-      - realtime
+      api:
+        condition: service_healthy
 
 volumes:
   dbdata:
+  natsdata:
