@@ -11,6 +11,14 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  // OIDC SSO (optional – omit to disable SSO login)
+  OIDC_ISSUER_URL: z.string().url().optional(),
+  OIDC_CLIENT_ID: z.string().optional(),
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  OIDC_REDIRECT_URI: z.string().url().optional(),
+  OIDC_SCOPES: z.string().default('openid profile email'),
+  // Frontend URL for post-SSO redirect
+  APP_URL: z.string().default('http://localhost:3000'),
 });
 
 export type Config = z.infer<typeof envSchema>;
