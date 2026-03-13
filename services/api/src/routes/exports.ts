@@ -51,24 +51,27 @@ export async function exportRoutes(fastify: FastifyInstance) {
           `UPDATE export_jobs SET status = 'running', started_at = now() WHERE export_id = $1`,
           [rows[0].export_id]
         );
-        // Simulate work
+        // Simulate work – in production this would be delegated to a worker queue
         await new Promise(resolve => setTimeout(resolve, 100));
         const fileKey = `exports/${rows[0].export_id}/${d.export_type}.zip`;
+        // Stub file size (0 bytes) – replaced by real size when worker writes the file
+        const stubFileSizeBytes = 0;
         await pool.query(
           `UPDATE export_jobs
            SET status = 'completed', completed_at = now(), file_key = $1, file_size_bytes = $2
            WHERE export_id = $3`,
-          [fileKey, Math.floor(Math.random() * 1000000) + 10000, rows[0].export_id]
+          [fileKey, stubFileSizeBytes, rows[0].export_id]
         );
         await pool.query(
           `INSERT INTO audit_events (tenant_id, actor_id, event_type, resource_type, resource_id, payload)
            VALUES ($1, $2, 'export.completed', 'export_job', $3, $4)`,
           [request.tenantId, request.user.sub, rows[0].export_id, JSON.stringify({ file_key: fileKey })]
         );
-      } catch {
+      } catch (err) {
+        fastify.log.error(err, 'Export job processing failed');
         await pool.query(
           `UPDATE export_jobs SET status = 'failed', error_message = $1 WHERE export_id = $2`,
-          ['Processing failed', rows[0].export_id]
+          [err instanceof Error ? err.message : 'Processing failed', rows[0].export_id]
         );
         await pool.query(
           `INSERT INTO audit_events (tenant_id, actor_id, event_type, resource_type, resource_id, payload)
