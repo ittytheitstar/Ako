@@ -210,7 +210,14 @@ export async function authRoutes(fastify: FastifyInstance) {
    * Generates a state + PKCE code_verifier, stores them in Redis, then redirects
    * the browser to the identity provider's authorization endpoint.
    */
-  fastify.get('/oidc/authorize', async (request, reply) => {
+  fastify.get('/oidc/authorize', {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '1 minute',
+      },
+    },
+  }, async (request, reply) => {
     if (!config.OIDC_ISSUER_URL || !config.OIDC_CLIENT_ID || !config.OIDC_REDIRECT_URI) {
       return reply.status(503).send({
         type: 'https://ako.invalid/errors/oidc-not-configured',
@@ -278,7 +285,14 @@ export async function authRoutes(fastify: FastifyInstance) {
    * Exchanges the code for tokens, upserts the user, issues an Ako JWT, and
    * redirects back to the frontend with the access/refresh tokens.
    */
-  fastify.get('/oidc/callback', async (request, reply) => {
+  fastify.get('/oidc/callback', {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: '1 minute',
+      },
+    },
+  }, async (request, reply) => {
     if (!config.OIDC_ISSUER_URL || !config.OIDC_CLIENT_ID || !config.OIDC_CLIENT_SECRET || !config.OIDC_REDIRECT_URI) {
       return reply.status(503).send({ error: 'OIDC not configured' });
     }
