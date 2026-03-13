@@ -45,10 +45,9 @@ export interface Course {
   title: string;
   description?: string;
   visibility: 'private' | 'tenant' | 'public';
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'completed' | 'archived' | 'deleted';
   published_at?: string;
   term_id?: string;
-  status: 'draft' | 'published' | 'completed' | 'archived' | 'deleted';
   created_by?: string;
   created_at: string;
   updated_at: string;

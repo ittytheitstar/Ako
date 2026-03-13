@@ -1,7 +1,14 @@
 -- Phase 4 – Archiving, Records, Analytics & Governance
 
--- Add lifecycle status to courses (draft|published|completed|archived|deleted)
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';
+-- Extend courses.status CHECK constraint to include Phase 4 lifecycle values
+-- (Phase 2 added the column with CHECK (status IN ('draft','published')))
+DO $$ BEGIN
+  ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_status_check;
+  ALTER TABLE courses ADD CONSTRAINT courses_status_check
+    CHECK (status IN ('draft', 'published', 'completed', 'archived', 'deleted'));
+END $$;
+
+-- Add Phase 4 columns to courses (status column already exists from Phase 2)
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS policy_id UUID;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS retention_until TIMESTAMPTZ;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS legal_hold BOOLEAN NOT NULL DEFAULT FALSE;
@@ -96,4 +103,7 @@ CREATE INDEX IF NOT EXISTS idx_export_jobs_status ON export_jobs(status);
 CREATE INDEX IF NOT EXISTS idx_audit_events_tenant ON audit_events(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_audit_events_actor ON audit_events(actor_id);
 CREATE INDEX IF NOT EXISTS idx_audit_events_type ON audit_events(event_type);
+-- Replace the Phase 2 partial index (WHERE archived_at IS NULL) with a full index
+-- now that Phase 4 needs to query courses in all lifecycle states by status
+DROP INDEX IF EXISTS idx_courses_status;
 CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
