@@ -153,6 +153,8 @@ export interface AssignmentSubmission {
   file_ids: string[];
 }
 
+export type GradeType = 'numerical' | 'scale' | 'letter' | 'pass_fail';
+
 export interface GradeItem {
   item_id: string;
   tenant_id: string;
@@ -162,6 +164,14 @@ export interface GradeItem {
   name: string;
   max_grade: number;
   settings: Record<string, unknown>;
+  // Phase 9 enhancements
+  category_id?: string;
+  weight: number;
+  extra_credit: boolean;
+  hidden: boolean;
+  locked: boolean;
+  release_at?: string;
+  grade_type: GradeType;
 }
 
 export interface Grade {
@@ -736,4 +746,114 @@ export interface LearnerProgressRow {
   progress_pct: number;
   completed_at?: string;
   last_evaluated_at?: string;
+}
+
+// ── Phase 9 Types ─────────────────────────────────────────────────────────────
+
+export type QuestionStatus = 'draft' | 'published' | 'deprecated';
+export type QuestionType = 'mcq' | 'multi' | 'short' | 'essay' | 'match' | 'truefalse';
+export type GradingStrategy = 'highest' | 'average' | 'latest' | 'first';
+export type BehaviourMode = 'deferred_feedback' | 'interactive' | 'immediate_feedback';
+export type AggregationStrategy = 'weighted_mean' | 'simple_mean' | 'sum' | 'highest' | 'lowest' | 'mode';
+export type MarkingWorkflowState = 'unmarked' | 'in_progress' | 'ready_for_release' | 'released';
+export type PoolOrder = 'random' | 'fixed';
+
+export interface QuestionCategory {
+  category_id: string;
+  tenant_id: string;
+  course_id?: string;
+  parent_id?: string;
+  name: string;
+  description?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Question {
+  question_id: string;
+  tenant_id: string;
+  course_id?: string;
+  category_id?: string;
+  qtype: QuestionType;
+  status: QuestionStatus;
+  tags: string[];
+  created_by?: string;
+  shared_at?: string;
+  shared_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuestionVersion {
+  version_id: string;
+  question_id: string;
+  version_num: number;
+  prompt: Record<string, unknown>;
+  options: Record<string, unknown>;
+  answer_key: Record<string, unknown>;
+  points: number;
+  created_by?: string;
+  created_at: string;
+}
+
+export interface QuestionWithLatestVersion extends Question {
+  latest_version?: QuestionVersion;
+  versions?: QuestionVersion[];
+}
+
+export interface QuizQuestionPool {
+  pool_id: string;
+  quiz_id: string;
+  tenant_id: string;
+  source_category_id?: string;
+  pick_count: number;
+  pool_order: PoolOrder;
+  position: number;
+  created_at: string;
+}
+
+export interface GradeCategory {
+  category_id: string;
+  tenant_id: string;
+  course_id: string;
+  parent_id?: string;
+  name: string;
+  aggregation_strategy: AggregationStrategy;
+  drop_lowest: number;
+  weight: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GradeScale {
+  scale_id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  levels?: GradeScaleLevel[];
+}
+
+export interface GradeScaleLevel {
+  level_id: string;
+  scale_id: string;
+  name: string;
+  value: number;
+  created_at: string;
+}
+
+export interface MarkingWorkflowStateRecord {
+  mws_id: string;
+  tenant_id: string;
+  item_id: string;
+  user_id: string;
+  state: MarkingWorkflowState;
+  marker_id?: string;
+  moderator_id?: string;
+  notes?: string;
+  updated_at: string;
+  created_at: string;
 }

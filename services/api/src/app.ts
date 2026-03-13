@@ -44,6 +44,8 @@ import { rateLimitRoutes } from './routes/rate-limits';
 import { permissionAuditRoutes } from './routes/permission-audit';
 import { systemAlertRoutes } from './routes/system-alerts';
 import { completionRoutes } from './routes/completion';
+import { questionBankRoutes } from './routes/question-bank';
+import { quizRoutes } from './routes/quizzes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -134,6 +136,10 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Phase 8 routes
   await fastify.register(completionRoutes, { prefix: '/api/v1/completion' });
+
+  // Phase 9 routes
+  await fastify.register(questionBankRoutes, { prefix: '/api/v1/question-bank' });
+  await fastify.register(quizRoutes, { prefix: '/api/v1/quizzes' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
