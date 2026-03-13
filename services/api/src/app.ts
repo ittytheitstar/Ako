@@ -25,6 +25,7 @@ import { fileRoutes } from './routes/files';
 import { ltiRoutes } from './routes/lti';
 import { scimRoutes } from './routes/scim';
 import { notificationRoutes } from './routes/notifications';
+import { termRoutes } from './routes/terms';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -90,6 +91,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(ltiRoutes, { prefix: '/api/v1/lti' });
   await fastify.register(scimRoutes, { prefix: '/scim/v2' });
   await fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' });
+  await fastify.register(termRoutes, { prefix: '/api/v1/terms' });
 
   fastify.setErrorHandler((error, _request, reply) => {
     if (error instanceof ProblemError) {
