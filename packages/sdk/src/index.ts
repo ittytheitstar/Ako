@@ -51,6 +51,12 @@ export class AkoClient {
     return response.json() as Promise<T>;
   }
 
+  private toQueryString(params?: Record<string, unknown>): string {
+    if (!params) return '';
+    const entries = Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]);
+    return entries.length > 0 ? '?' + new URLSearchParams(entries).toString() : '';
+  }
+
   // Auth
   async login(username: string, password: string) {
     return this.request<{ accessToken: string; refreshToken: string }>('/auth/token', {
@@ -748,5 +754,79 @@ export class AkoClient {
   }
   async revokeDeveloperKey(id: string) {
     return this.request<void>(`/developer/keys/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 6: Metrics ─────────────────────────────────────────────────────────
+  async getMetricsSummary() {
+    return this.request<import('@ako/shared').MetricsSummary>('/metrics/summary');
+  }
+  async getMetricSnapshots(params?: { metric_name?: string; limit?: number }) {
+    return this.request<{ data: import('@ako/shared').MetricSnapshot[] }>(
+      `/metrics/snapshots${this.toQueryString(params)}`
+    );
+  }
+
+  // ── Phase 6: Rate Limits ─────────────────────────────────────────────────────
+  async getRateLimitConfigs() {
+    return this.request<{ data: import('@ako/shared').RateLimitConfig[] }>('/rate-limits');
+  }
+  async createRateLimitConfig(data: Partial<import('@ako/shared').RateLimitConfig>) {
+    return this.request<import('@ako/shared').RateLimitConfig>('/rate-limits', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async updateRateLimitConfig(id: string, data: Partial<import('@ako/shared').RateLimitConfig>) {
+    return this.request<import('@ako/shared').RateLimitConfig>(`/rate-limits/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteRateLimitConfig(id: string) {
+    return this.request<void>(`/rate-limits/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 6: Permission Audit ─────────────────────────────────────────────────
+  async getPermissionMatrix() {
+    return this.request<import('@ako/shared').PermissionMatrix>('/permission-audit/matrix');
+  }
+  async getPermissionAuditEvents(params?: {
+    cursor?: string;
+    limit?: number;
+    permission_name?: string;
+    actor_id?: string;
+    granted?: boolean;
+  }) {
+    return this.request<{ data: import('@ako/shared').PermissionAuditLog[]; next_cursor: string | null }>(
+      `/permission-audit/events${this.toQueryString(params)}`
+    );
+  }
+  async getPermissionAnomalies() {
+    return this.request<{ broad_roles: unknown[]; denial_spikes: unknown[]; evaluated_at: string }>(
+      '/permission-audit/anomalies'
+    );
+  }
+
+  // ── Phase 6: System Alerts ───────────────────────────────────────────────────
+  async getSystemAlerts() {
+    return this.request<{ data: import('@ako/shared').SystemAlert[] }>('/system-alerts');
+  }
+  async createSystemAlert(data: Partial<import('@ako/shared').SystemAlert>) {
+    return this.request<import('@ako/shared').SystemAlert>('/system-alerts', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async updateSystemAlert(id: string, data: Partial<import('@ako/shared').SystemAlert>) {
+    return this.request<import('@ako/shared').SystemAlert>(`/system-alerts/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteSystemAlert(id: string) {
+    return this.request<void>(`/system-alerts/${id}`, { method: 'DELETE' });
+  }
+  async getTriggeredAlerts(limit?: number) {
+    const q = limit ? `?limit=${limit}` : '';
+    return this.request<{ data: import('@ako/shared').SystemAlertEvent[] }>(`/system-alerts/triggered${q}`);
+  }
+
+  // ── Phase 6: Health Probes ────────────────────────────────────────────────────
+  async getHealthLive() {
+    return this.request<{ status: string; uptime_seconds: number; timestamp: string }>('/health/live');
+  }
+  async getHealthReady() {
+    return this.request<{ status: string; checks: Record<string, unknown>; timestamp: string }>('/health/ready');
+  }
+  async getHealthStartup() {
+    return this.request<{ status: string; checks: Record<string, unknown>; timestamp: string }>('/health/startup');
   }
 }
