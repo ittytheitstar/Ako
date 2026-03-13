@@ -220,7 +220,54 @@ export interface TokenPayload {
   exp?: number;
 }
 
+export interface Announcement {
+  announcement_id: string;
+  tenant_id: string;
+  course_id?: string;
+  cohort_id?: string;
+  author_id: string;
+  title: string;
+  body: Record<string, unknown>;
+  channel: 'course' | 'cohort' | 'system';
+  scheduled_at?: string;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PresenceSession {
+  session_id: string;
+  tenant_id: string;
+  user_id: string;
+  status: 'online' | 'idle' | 'offline';
+  context_type?: string;
+  context_id?: string;
+  last_seen_at: string;
+  expires_at: string;
+}
+
+export interface Conversation {
+  conversation_id: string;
+  tenant_id: string;
+  convo_type: 'dm' | 'cohort' | 'course' | 'support';
+  course_id?: string;
+  cohort_id?: string;
+  created_at: string;
+  message_count?: number;
+  last_message_at?: string;
+  last_read_at?: string;
+  members?: Array<{ user_id: string; role: string }>;
+}
+
+export interface ForumSubscription {
+  forum_id: string;
+  thread_id?: string;
+  user_id: string;
+  created_at: string;
+}
+
 export interface ProblemDetails {
+
   type: string;
   title: string;
   status: number;

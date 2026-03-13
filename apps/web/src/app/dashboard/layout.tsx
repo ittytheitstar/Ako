@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/providers';
 import { logout } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
+import { NotificationBell } from '@/components/NotificationBell';
+import { usePresenceHeartbeat } from '@/hooks/usePresence';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,6 +24,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     queryFn: () => apiClient.getMe(),
     enabled: isAuthenticated,
   });
+
+  // Keep presence alive while dashboard is open
+  usePresenceHeartbeat();
 
   if (isLoading) {
     return (
@@ -40,6 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Assignments', href: '/dashboard/assignments', icon: '📝' },
     { label: 'Grades', href: '/dashboard/grades', icon: '📊' },
     { label: 'Messages', href: '/dashboard/messages', icon: '✉' },
+    { label: 'Notifications', href: '/dashboard/notifications', icon: '🔔' },
   ];
 
   return (
@@ -76,6 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p className="text-white text-sm font-medium truncate">{me.display_name}</p>
                 <p className="text-gray-400 text-xs truncate">{me.email}</p>
               </div>
+              <NotificationBell />
             </div>
             <button
               onClick={logout}
