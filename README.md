@@ -1,28 +1,52 @@
-# Ako (scaffold)
+# Ako LMS
 
-This folder contains **starter scaffolding** for an LMS project named **Ako**:
+A modern, API-first Learning Management System.
 
-- `spec/` : product + API + DB definition JSON
-- `db/` : PostgreSQL schema + seeds (auto-applied by docker compose)
-- `docker-compose.yml` : local dev stack skeleton (db, redis, nats, api, realtime, web)
+## Prerequisites
 
-> This is **not** a complete implementation; it is a project starter kit and a set of machine-readable definitions you can feed into GitHub Copilot / agents to generate code consistently.
+- Node.js 20+
+- pnpm 9+
+- Docker + Docker Compose
 
-## Quick start
+## Quick Start
 
 ```bash
+# Install dependencies
+pnpm install
+
+# Start the full stack (PostgreSQL, Redis, NATS, API, Realtime, Web)
 docker compose up -d
+
+# Access
+# Web UI:   http://localhost:3000
+# API:      http://localhost:8080/api/v1
+# Swagger:  http://localhost:8080/api/v1/docs
+# NATS:     http://localhost:8222
 ```
 
-The API and web apps are placeholders: you still need to create `services/api`, `services/realtime`, and `apps/web`.
+## Development (without Docker)
 
-## Specs
+```bash
+# Start infrastructure
+docker compose up -d db redis nats
 
-- `spec/ako.product.json` – product scope
-- `spec/ako.api.json` – API surface patterns
-- `spec/ako.db.json` – DB table inventory
+# API service
+cd services/api && cp .env.example .env && pnpm dev
 
-## Database
+# Realtime service
+cd services/realtime && cp .env.example .env && pnpm dev
 
-- `db/001_init.sql` – tables
-- `db/002_seed.sql` – baseline permissions
+# Web app
+cd apps/web && pnpm dev
+```
+
+## Running Tests
+
+```bash
+pnpm test
+pnpm test --filter @ako/api
+```
+
+## Architecture
+
+See [docs/architecture.md](docs/architecture.md).

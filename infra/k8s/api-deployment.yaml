@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ako-api
+  namespace: ako
+  labels:
+    app: ako-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ako-api
+  template:
+    metadata:
+      labels:
+        app: ako-api
+    spec:
+      containers:
+        - name: api
+          image: ako/api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ako-config
+            - secretRef:
+                name: ako-secrets
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ako-api
+  namespace: ako
+spec:
+  selector:
+    app: ako-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: ako
+description: Ako LMS Helm Chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - lms
+  - education
+home: https://github.com/ako/ako
+sources:
+  - https://github.com/ako/ako

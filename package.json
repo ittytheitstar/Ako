@@ -1,0 +1,12 @@
+{
+  "name": "ako",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "workspaces": ["apps/*", "services/*", "packages/*"],
+  "engines": { "node": ">=20", "pnpm": ">=9" }
+}
