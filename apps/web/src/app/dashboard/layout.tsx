@@ -53,6 +53,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Archive', href: '/dashboard/admin/archive', icon: '🗄' },
     { label: 'Retention', href: '/dashboard/admin/retention', icon: '📋' },
     { label: 'Compliance', href: '/dashboard/admin/compliance', icon: '🛡' },
+    { label: 'Plugins', href: '/dashboard/admin/plugins', icon: '🧩' },
+    { label: 'Integrations', href: '/dashboard/admin/integrations', icon: '🔌' },
+    { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: '🚩' },
+    { label: 'Developer', href: '/dashboard/developer', icon: '💻' },
   ];
 
   return (
