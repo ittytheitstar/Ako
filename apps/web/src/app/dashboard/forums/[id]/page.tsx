@@ -4,27 +4,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 export default function ForumPage({ params }: Props) {
+  const { id } = React.use(params);
   const qc = useQueryClient();
   const [newTitle, setNewTitle] = useState('');
   const [showNew, setShowNew] = useState(false);
 
   const { data: forum } = useQuery({
-    queryKey: ['forum', params.id],
-    queryFn: () => apiClient.getForum(params.id),
+    queryKey: ['forum', id],
+    queryFn: () => apiClient.getForum(id),
   });
 
   const { data: threads, isLoading } = useQuery({
-    queryKey: ['threads', params.id],
-    queryFn: () => apiClient.getThreads(params.id),
+    queryKey: ['threads', id],
+    queryFn: () => apiClient.getThreads(id),
   });
 
   const createThread = useMutation({
-    mutationFn: (title: string) => apiClient.createThread(params.id, { title }),
+    mutationFn: (title: string) => apiClient.createThread(id, { title }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['threads', params.id] });
+      qc.invalidateQueries({ queryKey: ['threads', id] });
       setNewTitle('');
       setShowNew(false);
     },
@@ -79,7 +80,7 @@ export default function ForumPage({ params }: Props) {
           {threads?.data?.map((thread) => (
             <Link
               key={thread.thread_id}
-              href={`/dashboard/forums/${params.id}/threads/${thread.thread_id}`}
+              href={`/dashboard/forums/${id}/threads/${thread.thread_id}`}
               className="flex items-center gap-4 bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-sm transition-all"
             >
               <div className="flex-1">

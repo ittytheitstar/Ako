@@ -97,12 +97,13 @@ export async function buildApp(): Promise<FastifyInstance> {
     if (error instanceof ProblemError) {
       return reply.status(error.status).send(error.toJSON());
     }
-    if (error.statusCode === 400) {
+    const err = error as { statusCode?: number; message?: string };
+    if (err.statusCode === 400) {
       return reply.status(400).send({
         type: 'https://ako.invalid/errors/bad-request',
         title: 'Bad Request',
         status: 400,
-        detail: error.message,
+        detail: err.message,
       });
     }
     fastify.log.error(error);

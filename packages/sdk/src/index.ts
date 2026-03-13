@@ -2,7 +2,7 @@ import type {
   Tenant, User, Course, CourseSection, CourseModule,
   Forum, ForumThread, ForumPost, Assignment, AssignmentSubmission,
   Grade, GradeItem, Message, Notification, Role, Permission,
-  Enrolment, Cohort,
+  Enrolment, Cohort, Term, CourseGroup, CourseGrouping, EnrolmentMethod,
   PaginatedResponse,
 } from '@ako/shared';
 
@@ -231,6 +231,110 @@ export class AkoClient {
   }
   async deleteCohort(id: string) {
     return this.request<void>(`/cohorts/${id}`, { method: 'DELETE' });
+  }
+  async getCohortMembers(id: string) {
+    return this.request<PaginatedResponse<User & { added_at: string }>>(`/cohorts/${id}/members`);
+  }
+  async addCohortMember(cohortId: string, userId: string) {
+    return this.request<{ cohort_id: string; user_id: string }>(`/cohorts/${cohortId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+  async removeCohortMember(cohortId: string, userId: string) {
+    return this.request<void>(`/cohorts/${cohortId}/members/${userId}`, { method: 'DELETE' });
+  }
+  async bulkAddCohortMembers(cohortId: string, userIds: string[]) {
+    return this.request<{ cohort_id: string; added: number }>(`/cohorts/${cohortId}/members/bulkAdd`, {
+      method: 'POST',
+      body: JSON.stringify({ user_ids: userIds }),
+    });
+  }
+  async bulkRemoveCohortMembers(cohortId: string, userIds: string[]) {
+    return this.request<{ cohort_id: string; removed: number }>(`/cohorts/${cohortId}/members/bulkRemove`, {
+      method: 'POST',
+      body: JSON.stringify({ user_ids: userIds }),
+    });
+  }
+  async reconcileCohortSync(cohortId: string) {
+    return this.request<{ cohort_id: string; courses_synced: number; enrolments_upserted: number }>(`/cohorts/${cohortId}/sync/reconcile`, { method: 'POST' });
+  }
+
+  // Terms
+  async getTerms() {
+    return this.request<PaginatedResponse<Term>>('/terms');
+  }
+  async getTerm(id: string) {
+    return this.request<Term>(`/terms/${id}`);
+  }
+  async createTerm(data: Partial<Term>) {
+    return this.request<Term>('/terms', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async updateTerm(id: string, data: Partial<Term>) {
+    return this.request<Term>(`/terms/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteTerm(id: string) {
+    return this.request<void>(`/terms/${id}`, { method: 'DELETE' });
+  }
+
+  // Course publish
+  async publishCourse(id: string) {
+    return this.request<Course>(`/courses/${id}/publish`, { method: 'POST' });
+  }
+
+  // Course groups
+  async getCourseGroups(courseId: string) {
+    return this.request<PaginatedResponse<CourseGroup>>(`/courses/${courseId}/groups`);
+  }
+  async createCourseGroup(courseId: string, data: { name: string; cohort_id?: string }) {
+    return this.request<CourseGroup>(`/courses/${courseId}/groups`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async deleteCourseGroup(courseId: string, groupId: string) {
+    return this.request<void>(`/courses/${courseId}/groups/${groupId}`, { method: 'DELETE' });
+  }
+
+  // Course groupings
+  async getCourseGroupings(courseId: string) {
+    return this.request<PaginatedResponse<CourseGrouping & { groups: { group_id: string; name: string }[] }>>(`/courses/${courseId}/groupings`);
+  }
+  async createCourseGrouping(courseId: string, data: { name: string }) {
+    return this.request<CourseGrouping>(`/courses/${courseId}/groupings`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async addGroupsToGrouping(courseId: string, groupingId: string, groupIds: string[]) {
+    return this.request<{ grouping_id: string; group_ids: string[] }>(`/courses/${courseId}/groupings/${groupingId}/groups`, {
+      method: 'POST',
+      body: JSON.stringify({ group_ids: groupIds }),
+    });
+  }
+  async deleteCourseGrouping(courseId: string, groupingId: string) {
+    return this.request<void>(`/courses/${courseId}/groupings/${groupingId}`, { method: 'DELETE' });
+  }
+
+  // Enrolment methods
+  async getEnrolmentMethods(courseId: string) {
+    return this.request<PaginatedResponse<EnrolmentMethod>>(`/courses/${courseId}/enrolment-methods`);
+  }
+  async createEnrolmentMethod(courseId: string, data: Partial<EnrolmentMethod>) {
+    return this.request<EnrolmentMethod>(`/courses/${courseId}/enrolment-methods`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async deleteEnrolmentMethod(courseId: string, methodId: string) {
+    return this.request<void>(`/courses/${courseId}/enrolment-methods/${methodId}`, { method: 'DELETE' });
+  }
+
+  // Reconciliation
+  async reconcileCourseEnrolments(courseId: string) {
+    return this.request<{ course_id: string; added: number; suspended: number; methods_processed: number }>(`/courses/${courseId}/enrolments/reconcile`, { method: 'POST' });
+  }
+
+  // Module visibility / move
+  async hideModule(courseId: string, moduleId: string) {
+    return this.request<CourseModule>(`/courses/${courseId}/modules/${moduleId}/hide`, { method: 'POST' });
+  }
+  async showModule(courseId: string, moduleId: string) {
+    return this.request<CourseModule>(`/courses/${courseId}/modules/${moduleId}/show`, { method: 'POST' });
+  }
+  async moveModule(courseId: string, moduleId: string, data: { position: number; section_id?: string }) {
+    return this.request<CourseModule>(`/courses/${courseId}/modules/${moduleId}/move`, { method: 'POST', body: JSON.stringify(data) });
   }
 
   // Forums

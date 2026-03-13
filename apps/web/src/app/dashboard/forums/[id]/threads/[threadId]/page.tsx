@@ -5,22 +5,23 @@ import { apiClient, getAccessToken } from '@/lib/api';
 import { RealtimeClient } from '@/lib/ws';
 import Link from 'next/link';
 
-interface Props { params: { id: string; threadId: string } }
+interface Props { params: Promise<{ id: string; threadId: string }> }
 
 export default function ThreadPage({ params }: Props) {
+  const { id, threadId } = React.use(params);
   const qc = useQueryClient();
   const [reply, setReply] = useState('');
   const rtRef = useRef<RealtimeClient | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: thread } = useQuery({
-    queryKey: ['thread', params.id, params.threadId],
-    queryFn: () => apiClient.getThread(params.id, params.threadId),
+    queryKey: ['thread', id, threadId],
+    queryFn: () => apiClient.getThread(id, threadId),
   });
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ['posts', params.id, params.threadId],
-    queryFn: () => apiClient.getPosts(params.id, params.threadId),
+    queryKey: ['posts', id, threadId],
+    queryFn: () => apiClient.getPosts(id, threadId),
   });
 
   // Realtime updates
@@ -29,10 +30,10 @@ export default function ThreadPage({ params }: Props) {
     if (!token) return;
     const rt = new RealtimeClient(token);
     rt.connect();
-    const channel = `forum:${params.id}:thread:${params.threadId}`;
+    const channel = `forum:${id}:thread:${threadId}`;
     const unsub = rt.subscribe(channel, (msg) => {
       if (msg.type === 'event' && (msg.event === 'post.created' || msg.event === 'post.updated')) {
-        qc.invalidateQueries({ queryKey: ['posts', params.id, params.threadId] });
+        qc.invalidateQueries({ queryKey: ['posts', id, threadId] });
       }
     });
     rtRef.current = rt;
@@ -40,12 +41,12 @@ export default function ThreadPage({ params }: Props) {
       unsub();
       rt.disconnect();
     };
-  }, [params.id, params.threadId, qc]);
+  }, [id, threadId, qc]);
 
   const createPost = useMutation({
-    mutationFn: (text: string) => apiClient.createPost(params.id, params.threadId, { text }),
+    mutationFn: (text: string) => apiClient.createPost(id, threadId, { text }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['posts', params.id, params.threadId] });
+      qc.invalidateQueries({ queryKey: ['posts', id, threadId] });
       setReply('');
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     },
@@ -56,7 +57,7 @@ export default function ThreadPage({ params }: Props) {
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
         <Link href="/dashboard/forums" className="hover:text-blue-600">Forums</Link>
         <span>›</span>
-        <Link href={`/dashboard/forums/${params.id}`} className="hover:text-blue-600">Forum</Link>
+        <Link href={`/dashboard/forums/${id}`} className="hover:text-blue-600">Forum</Link>
         <span>›</span>
         <span className="text-gray-900 truncate">{thread?.title}</span>
       </div>
