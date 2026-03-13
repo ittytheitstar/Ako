@@ -401,19 +401,7 @@ export async function gradebookRoutes(fastify: FastifyInstance) {
        WHERE mws_id = $${params.length - 1} AND tenant_id = $${params.length} RETURNING *`,
       params
     );
-    if (rows.length === 0) {
-      // Create if not exists
-      const bodyRaw = request.body as { state: string; notes?: string; moderator_id?: string };
-      const { rows: created } = await pool.query(
-        `INSERT INTO marking_workflow_states (tenant_id, item_id, user_id, state, marker_id, moderator_id, notes)
-         SELECT $1, item_id, $2, $3, $4, $5, $6 FROM marking_workflow_states WHERE mws_id = $7 AND tenant_id = $1
-         ON CONFLICT DO NOTHING RETURNING *`,
-        [request.tenantId, request.user.sub, bodyRaw.state, request.user.sub,
-         bodyRaw.moderator_id ?? null, bodyRaw.notes ?? null, id]
-      );
-      if (created.length === 0) throw NotFound('Marking workflow state not found');
-      return reply.send(created[0]);
-    }
+    if (rows.length === 0) throw NotFound('Marking workflow state not found');
     return reply.send(rows[0]);
   });
 

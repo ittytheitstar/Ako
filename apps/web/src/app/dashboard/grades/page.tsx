@@ -55,7 +55,7 @@ export default function GradesPage() {
   const pctColour = (p: number) =>
     p >= 70 ? 'bg-green-100 text-green-700' : p >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
 
-  const renderItemRow = (item: GradeItem & { weight?: number; extra_credit?: boolean }) => {
+  const renderItemRow = (item: GradeItem) => {
     const grade = getGradeForItem(item.item_id);
     const p = grade?.grade != null ? pct(grade.grade, item.max_grade) : null;
     return (

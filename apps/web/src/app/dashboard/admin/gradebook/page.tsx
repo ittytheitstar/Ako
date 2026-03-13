@@ -124,18 +124,13 @@ export default function AdminGradebookPage() {
   const categories = (categoriesQuery.data?.data ?? []) as GradeCategory[];
   const workflowStates = (workflowQuery.data?.data ?? []) as MarkingWorkflowStateRecord[];
 
-  const handleGradeChange = (itemId: string, userId: string, value: string) => {
+  const handleGradeChange = (itemId: string, field: 'gradeValue' | 'targetUserId', value: string) => {
     setEditingGrades(prev => ({
       ...prev,
-      [itemId]: { ...(prev[itemId] ?? {}), [userId]: value },
+      [itemId]: { ...(prev[itemId] ?? {}), [field]: value },
     }));
   };
 
-  const saveGrade = (itemId: string, userId: string) => {
-    const val = editingGrades[itemId]?.[userId];
-    if (val === undefined || val === '') return;
-    upsertGrade.mutate({ item_id: itemId, user_id: userId, grade: Number(val) });
-  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -277,21 +272,21 @@ export default function AdminGradebookPage() {
                                   max={item.max_grade}
                                   disabled={item.locked}
                                   placeholder="—"
-                                  value={editingGrades[item.item_id]?.['_'] ?? ''}
-                                  onChange={e => handleGradeChange(item.item_id, '_', e.target.value)}
+                                  value={editingGrades[item.item_id]?.['gradeValue'] ?? ''}
+                                  onChange={e => handleGradeChange(item.item_id, 'gradeValue', e.target.value)}
                                   className="w-20 border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-50"
                                 />
                                 <input
                                   type="text"
                                   placeholder="user_id"
-                                  value={editingGrades[item.item_id]?.['userId'] ?? ''}
-                                  onChange={e => handleGradeChange(item.item_id, 'userId', e.target.value)}
+                                  value={editingGrades[item.item_id]?.['targetUserId'] ?? ''}
+                                  onChange={e => handleGradeChange(item.item_id, 'targetUserId', e.target.value)}
                                   className="w-32 border border-gray-300 rounded px-2 py-1 text-sm"
                                 />
                                 <button
                                   onClick={() => {
-                                    const grade = editingGrades[item.item_id]?.['_'];
-                                    const userId = editingGrades[item.item_id]?.['userId'];
+                                    const grade = editingGrades[item.item_id]?.['gradeValue'];
+                                    const userId = editingGrades[item.item_id]?.['targetUserId'];
                                     if (grade && userId) {
                                       upsertGrade.mutate({ item_id: item.item_id, user_id: userId, grade: Number(grade) });
                                     }

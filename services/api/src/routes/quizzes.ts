@@ -160,7 +160,7 @@ export async function quizRoutes(fastify: FastifyInstance) {
       `SELECT count(*)::int AS cnt FROM quiz_attempts WHERE quiz_id = $1 AND user_id = $2 AND tenant_id = $3`,
       [id, request.user.sub, request.tenantId]
     );
-    if (existingAttempts[0].cnt >= q.max_attempts) {
+    if (q.max_attempts != null && existingAttempts[0].cnt >= q.max_attempts) {
       throw BadRequest('Maximum number of attempts reached');
     }
 
