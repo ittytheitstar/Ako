@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, use } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function CohortDetailPage({ params }: Props) {
-  const { id } = React.use(params);
+  const { id } = use(params);
   const queryClient = useQueryClient();
   const [memberSearch, setMemberSearch] = useState('');
   const [singleUserId, setSingleUserId] = useState('');

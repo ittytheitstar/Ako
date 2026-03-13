@@ -8,7 +8,7 @@ const courseSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   visibility: z.enum(['private', 'tenant', 'public']).default('private'),
-  status: z.enum(['draft', 'published']).default('draft'),
+  status: z.enum(['draft', 'published', 'completed', 'archived', 'deleted']).default('draft'),
   term_id: z.string().uuid().optional(),
 });
 
@@ -39,7 +39,7 @@ export async function courseRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { cursor, limit = 20, status } = request.query as { cursor?: string; limit?: number; status?: string };
     const params: unknown[] = [request.tenantId, Math.min(Number(limit), 100)];
-    let query = `SELECT course_id, tenant_id, course_code, title, description, visibility, status, published_at, term_id, created_by, created_at, updated_at, archived_at FROM courses WHERE tenant_id = $1 AND archived_at IS NULL`;
+    let query = `SELECT course_id, tenant_id, course_code, title, description, visibility, status, published_at, term_id, created_by, created_at, updated_at, archived_at, policy_id, retention_until, legal_hold FROM courses WHERE tenant_id = $1 AND archived_at IS NULL`;
     if (status) { query += ` AND status = $${params.length + 1}`; params.push(status); }
     if (cursor) { query += ` AND course_id > $${params.length + 1}`; params.push(cursor); }
     query += ` ORDER BY course_id LIMIT $2`;

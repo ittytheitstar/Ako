@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, use } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ const moduleIcons: Record<string, string> = {
 };
 
 export default function CourseBuilderPage({ params }: Props) {
-  const { id: courseId } = React.use(params);
+  const { id: courseId } = use(params);
   const queryClient = useQueryClient();
 
   // ── Queries ──────────────────────────────────────────────────────────────
