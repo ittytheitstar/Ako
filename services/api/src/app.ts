@@ -43,6 +43,7 @@ import { metricsRoutes } from './routes/metrics';
 import { rateLimitRoutes } from './routes/rate-limits';
 import { permissionAuditRoutes } from './routes/permission-audit';
 import { systemAlertRoutes } from './routes/system-alerts';
+import { completionRoutes } from './routes/completion';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -130,6 +131,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(rateLimitRoutes, { prefix: '/api/v1/rate-limits' });
   await fastify.register(permissionAuditRoutes, { prefix: '/api/v1/permission-audit' });
   await fastify.register(systemAlertRoutes, { prefix: '/api/v1/system-alerts' });
+
+  // Phase 8 routes
+  await fastify.register(completionRoutes, { prefix: '/api/v1/completion' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
