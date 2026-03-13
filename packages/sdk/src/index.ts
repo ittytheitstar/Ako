@@ -259,6 +259,9 @@ export class AkoClient {
   async reconcileCohortSync(cohortId: string) {
     return this.request<{ cohort_id: string; courses_synced: number; enrolments_upserted: number }>(`/cohorts/${cohortId}/sync/reconcile`, { method: 'POST' });
   }
+  async getCohortCourses(cohortId: string) {
+    return this.request<PaginatedResponse<Course & { method_id: string; method_type: string; default_role: string }>>(`/cohorts/${cohortId}/courses`);
+  }
 
   // Terms
   async getTerms() {

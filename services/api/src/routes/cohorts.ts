@@ -172,6 +172,19 @@ export async function cohortRoutes(fastify: FastifyInstance) {
     return reply.send({ cohort_id: id, removed: body.data.user_ids.length });
   });
 
+  // Get courses linked to this cohort via enrolment methods
+  fastify.get('/:id/courses', { preHandler: fastify.authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { rows } = await pool.query(
+      `SELECT c.*, em.method_id, em.method_type, em.default_role, em.create_group
+       FROM enrolment_methods em
+       JOIN courses c ON c.course_id = em.course_id
+       WHERE em.cohort_id = $1 AND em.tenant_id = $2 AND em.active = TRUE`,
+      [id, request.tenantId]
+    );
+    return reply.send({ data: rows });
+  });
+
   // Reconcile sync
   fastify.post('/:id/sync/reconcile', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };

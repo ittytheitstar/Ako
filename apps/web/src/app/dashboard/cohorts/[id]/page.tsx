@@ -27,32 +27,12 @@ export default function CohortDetailPage({ params }: Props) {
     queryFn: () => apiClient.getCohortMembers(id),
   });
 
-  const { data: courses } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => apiClient.getCourses(),
+  const { data: linkedCoursesData } = useQuery({
+    queryKey: ['cohortCourses', id],
+    queryFn: () => apiClient.getCohortCourses(id),
   });
 
-  const { data: enrolmentMethodsAll } = useQuery({
-    queryKey: ['allEnrolmentMethods'],
-    queryFn: async () => {
-      const all = await Promise.all(
-        (courses?.data ?? []).map(async c => {
-          try {
-            const methods = await apiClient.getEnrolmentMethods(c.course_id);
-            return { course: c, methods: methods.data };
-          } catch {
-            return { course: c, methods: [] };
-          }
-        })
-      );
-      return all;
-    },
-    enabled: !!courses?.data?.length,
-  });
-
-  const linkedCourses = enrolmentMethodsAll?.filter(({ methods }) =>
-    methods.some(m => (m as { cohort_id?: string }).cohort_id === id)
-  ) ?? [];
+  const linkedCourses = linkedCoursesData?.data ?? [];
 
   const addMemberMutation = useMutation({
     mutationFn: () => apiClient.addCohortMember(id, singleUserId.trim()),
@@ -246,7 +226,7 @@ export default function CohortDetailPage({ params }: Props) {
               <p className="text-sm text-gray-500">No courses linked to this cohort</p>
             ) : (
               <div className="space-y-2">
-                {linkedCourses.map(({ course }) => (
+                {linkedCourses.map((course) => (
                   <Link
                     key={course.course_id}
                     href={`/dashboard/courses/${course.course_id}`}

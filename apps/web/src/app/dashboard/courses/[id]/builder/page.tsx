@@ -163,8 +163,8 @@ export default function CourseBuilderPage({ params }: Props) {
   });
 
   // ── Build modules-by-section map ─────────────────────────────────────────
-  type Mod = NonNullable<typeof modules>['data'][number];
-  const modulesBySection = new Map<string | undefined, Mod[]>();
+  type CourseModuleData = NonNullable<typeof modules>['data'][number];
+  const modulesBySection = new Map<string | undefined, CourseModuleData[]>();
   modules?.data?.forEach(m => {
     const key = m.section_id ?? undefined;
     if (!modulesBySection.has(key)) modulesBySection.set(key, []);
