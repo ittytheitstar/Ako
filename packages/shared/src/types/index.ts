@@ -656,3 +656,84 @@ export interface PermissionMatrix {
     description?: string;
   }>;
 }
+
+// ── Phase 8 Types ─────────────────────────────────────────────────────────────
+
+export type CompletionType = 'view' | 'submit' | 'grade' | 'post' | 'manual' | 'teacher';
+export type CompletionState = 'incomplete' | 'complete' | 'complete_pass' | 'complete_fail';
+export type CourseCompletionState = 'incomplete' | 'in_progress' | 'complete';
+export type CompletionCriterionType = 'required_modules' | 'min_grade' | 'required_date' | 'all_modules';
+
+export interface ActivityCompletionRule {
+  rule_id: string;
+  tenant_id: string;
+  module_id: string;
+  completion_type: CompletionType;
+  passing_grade?: number;
+  require_view: boolean;
+  expected_completion_date?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActivityCompletionState {
+  state_id: string;
+  tenant_id: string;
+  module_id: string;
+  user_id: string;
+  state: CompletionState;
+  completed_at?: string;
+  completion_source?: CompletionType;
+  overridden_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseCompletionCriterion {
+  criterion_id: string;
+  tenant_id: string;
+  course_id: string;
+  criterion_type: CompletionCriterionType;
+  settings: Record<string, unknown>;
+  created_by?: string;
+  created_at: string;
+}
+
+export interface CourseCompletionStateRecord {
+  ccs_id: string;
+  tenant_id: string;
+  course_id: string;
+  user_id: string;
+  state: CourseCompletionState;
+  progress_pct: number;
+  completed_at?: string;
+  last_evaluated_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseProgressSummary {
+  course_id: string;
+  user_id: string;
+  state: CourseCompletionState;
+  progress_pct: number;
+  total_tracked: number;
+  complete_count: number;
+  incomplete_count: number;
+  complete_pass_count: number;
+  complete_fail_count: number;
+  completed_at?: string;
+  last_evaluated_at?: string;
+  next_action?: string;
+}
+
+export interface LearnerProgressRow {
+  user_id: string;
+  display_name: string;
+  email: string;
+  state: CourseCompletionState;
+  progress_pct: number;
+  completed_at?: string;
+  last_evaluated_at?: string;
+}

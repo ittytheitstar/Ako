@@ -829,4 +829,79 @@ export class AkoClient {
   async getHealthStartup() {
     return this.request<{ status: string; checks: Record<string, unknown>; timestamp: string }>('/health/startup');
   }
+
+  // ── Phase 8: Completion Tracking ─────────────────────────────────────────────
+
+  async getModuleCompletionRule(moduleId: string) {
+    return this.request<import('@ako/shared').ActivityCompletionRule>(`/completion/modules/${moduleId}/rules`);
+  }
+  async setModuleCompletionRule(moduleId: string, data: {
+    completion_type: import('@ako/shared').CompletionType;
+    passing_grade?: number;
+    require_view?: boolean;
+    expected_completion_date?: string;
+  }) {
+    return this.request<import('@ako/shared').ActivityCompletionRule>(
+      `/completion/modules/${moduleId}/rules`,
+      { method: 'PUT', body: JSON.stringify(data) }
+    );
+  }
+  async deleteModuleCompletionRule(moduleId: string) {
+    return this.request<void>(`/completion/modules/${moduleId}/rules`, { method: 'DELETE' });
+  }
+  async getModuleCompletionStates(moduleId: string) {
+    return this.request<{ data: import('@ako/shared').ActivityCompletionState[] }>(
+      `/completion/modules/${moduleId}/states`
+    );
+  }
+  async getMyModuleCompletionState(moduleId: string) {
+    return this.request<import('@ako/shared').ActivityCompletionState | { module_id: string; user_id: string; state: string }>(
+      `/completion/modules/${moduleId}/states/me`
+    );
+  }
+  async markModuleComplete(moduleId: string, data?: {
+    user_id?: string;
+    state?: import('@ako/shared').CompletionState;
+    completion_source?: 'manual' | 'teacher';
+  }) {
+    return this.request<import('@ako/shared').ActivityCompletionState>(
+      `/completion/modules/${moduleId}/complete`,
+      { method: 'POST', body: JSON.stringify(data ?? {}) }
+    );
+  }
+  async undoModuleComplete(moduleId: string, userId?: string) {
+    const q = userId ? `?user_id=${userId}` : '';
+    return this.request<void>(`/completion/modules/${moduleId}/complete${q}`, { method: 'DELETE' });
+  }
+  async getCourseCompletionCriteria(courseId: string) {
+    return this.request<{ data: import('@ako/shared').CourseCompletionCriterion[] }>(
+      `/completion/courses/${courseId}/criteria`
+    );
+  }
+  async addCourseCompletionCriterion(courseId: string, data: {
+    criterion_type: import('@ako/shared').CompletionCriterionType;
+    settings?: Record<string, unknown>;
+  }) {
+    return this.request<import('@ako/shared').CourseCompletionCriterion>(
+      `/completion/courses/${courseId}/criteria`,
+      { method: 'POST', body: JSON.stringify(data) }
+    );
+  }
+  async deleteCourseCompletionCriterion(courseId: string, criterionId: string) {
+    return this.request<void>(`/completion/courses/${courseId}/criteria/${criterionId}`, { method: 'DELETE' });
+  }
+  async getMyCourseProgress(courseId: string) {
+    return this.request<import('@ako/shared').CourseProgressSummary>(`/completion/courses/${courseId}/progress`);
+  }
+  async getCourseProgressSummary(courseId: string) {
+    return this.request<{ data: import('@ako/shared').LearnerProgressRow[] }>(
+      `/completion/courses/${courseId}/summary`
+    );
+  }
+  async evaluateCourseCompletion(courseId: string) {
+    return this.request<{ evaluated: number; succeeded: number }>(
+      `/completion/courses/${courseId}/evaluate`,
+      { method: 'POST' }
+    );
+  }
 }
