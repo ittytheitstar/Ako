@@ -36,8 +36,8 @@ async function fanOutNotifications(
   for (const sub of subs) {
     await pool.query(
       `INSERT INTO notifications (tenant_id, user_id, kind, payload)
-       VALUES ((SELECT tenant_id FROM forum_threads WHERE thread_id = $1), $2, 'forum_post', $3)`,
-      [threadId, sub.user_id, JSON.stringify({
+       VALUES ($1, $2, 'forum_post', $3)`,
+      [tenantId, sub.user_id, JSON.stringify({
         thread_id: threadId,
         forum_id: forumId,
         post_id: postId,

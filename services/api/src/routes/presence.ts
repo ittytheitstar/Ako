@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { pool } from '../db/client';
 import { BadRequest } from '@ako/shared';
 
+const PRESENCE_TTL_SECONDS = 300; // 5 minutes
+
 const presenceSchema = z.object({
   status: z.enum(['online', 'idle', 'offline']).default('online'),
   context_type: z.string().optional(),
@@ -15,7 +17,7 @@ export async function presenceRoutes(fastify: FastifyInstance) {
     const body = presenceSchema.safeParse(request.body);
     if (!body.success) throw BadRequest(body.error.message);
 
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
+    const expiresAt = new Date(Date.now() + PRESENCE_TTL_SECONDS * 1000).toISOString();
     const { rows } = await pool.query(
       `INSERT INTO presence_sessions (tenant_id, user_id, status, context_type, context_id, last_seen_at, expires_at)
        VALUES ($1, $2, $3, $4, $5, now(), $6)
@@ -34,7 +36,7 @@ export async function presenceRoutes(fastify: FastifyInstance) {
       const redis = fastify.redis;
       if (redis) {
         const key = `presence:${request.tenantId}:${request.user.sub}`;
-        await redis.setex(key, 300, JSON.stringify({
+        await redis.setex(key, PRESENCE_TTL_SECONDS, JSON.stringify({
           userId: request.user.sub,
           status: body.data.status,
           context_type: body.data.context_type,

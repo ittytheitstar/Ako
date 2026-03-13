@@ -110,8 +110,9 @@ export default function MessagesPage() {
           </div>
           <div className="flex-1 overflow-y-auto">
             {conversations?.data?.map((conv) => {
-              const unread = !conv.last_read_at ||
-                (conv.last_message_at && new Date(conv.last_message_at) > new Date(conv.last_read_at));
+              const lastRead = conv.last_read_at ? new Date(conv.last_read_at).getTime() : 0;
+              const lastMsg = conv.last_message_at ? new Date(conv.last_message_at).getTime() : 0;
+              const unread = lastMsg > 0 && (lastRead === 0 || lastMsg > lastRead);
               return (
                 <button
                   key={conv.conversation_id}
