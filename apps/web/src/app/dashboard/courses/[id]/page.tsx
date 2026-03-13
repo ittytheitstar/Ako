@@ -1,4 +1,5 @@
 'use client';
+import React, { useState, use } from 'react';
 import React, { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
@@ -17,6 +18,12 @@ const moduleIcons: Record<string, string> = {
   lti: '🔗',
   scorm: '📦',
 };
+
+type Tab = 'content' | 'forums' | 'announcements';
+
+export default function CourseDetailPage({ params }: Props) {
+  const { id } = use(params);
+  const [tab, setTab] = useState<Tab>('content');
 
 type Tab = 'content' | 'groups' | 'enrolments';
 
@@ -42,6 +49,16 @@ export default function CourseDetailPage({ params }: Props) {
     queryFn: () => apiClient.getGradebook(id),
   });
 
+  const { data: forums } = useQuery({
+    queryKey: ['forums', id],
+    queryFn: () => apiClient.getForums({ course_id: id }),
+    enabled: tab === 'forums',
+  });
+
+  const { data: announcements } = useQuery({
+    queryKey: ['announcements', id],
+    queryFn: () => apiClient.getCourseAnnouncements(id),
+    enabled: tab === 'announcements',
   const { data: groups } = useQuery({
     queryKey: ['courseGroups', id],
     queryFn: () => apiClient.getCourseGroups(id),
@@ -117,6 +134,10 @@ export default function CourseDetailPage({ params }: Props) {
     modulesBySection.get(key)!.data.push(m);
   });
 
+  const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: 'content', label: 'Content', icon: '📚' },
+    { id: 'forums', label: 'Discussions', icon: '💬' },
+    { id: 'announcements', label: 'Announcements', icon: '📢' },
   const status = (course as { status?: string }).status;
   const cohortMap = new Map(cohorts?.data?.map(c => [c.cohort_id, c]) ?? []);
 
@@ -175,6 +196,13 @@ export default function CourseDetailPage({ params }: Props) {
       </div>
 
       {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === t.id
       <div className="flex gap-1 border-b border-gray-200 mb-6">
         {tabs.map(t => (
           <button
@@ -186,11 +214,14 @@ export default function CourseDetailPage({ params }: Props) {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
+            <span>{t.icon}</span>
+            <span>{t.label}</span>
             {t.label}
           </button>
         ))}
       </div>
 
+      {tab === 'content' && (
       {activeTab === 'content' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
@@ -207,6 +238,8 @@ export default function CourseDetailPage({ params }: Props) {
                       {section.summary && <p className="text-sm text-gray-500 mt-1">{section.summary}</p>}
                     </div>
                     <div className="divide-y divide-gray-50">
+                      {modulesBySection.get(section.section_id)?.data?.map((mod) => (
+                        <div key={mod.module_id} className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 transition-colors">
                       {modulesBySection.get(section.section_id)?.data?.map((mod) => {
                         const availability = (mod as { availability?: { groupingName?: string } }).availability;
                         return (
@@ -222,6 +255,24 @@ export default function CourseDetailPage({ params }: Props) {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                ))}
+                {(modulesBySection.get(undefined)?.data?.length ?? 0) > 0 && (
+                  <div className="bg-white rounded-xl border border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-100">
+                      <h2 className="font-semibold text-gray-900">General</h2>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                      {modulesBySection.get(undefined)?.data?.map((mod) => (
+                        <div key={mod.module_id} className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50">
+                          <span className="text-xl">{moduleIcons[mod.module_type] ?? '📌'}</span>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{mod.title}</p>
+                            <p className="text-xs text-gray-500 capitalize">{mod.module_type}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -272,6 +323,53 @@ export default function CourseDetailPage({ params }: Props) {
               </Link>
             </div>
           </div>
+        </div>
+      )}
+
+      {tab === 'forums' && (
+        <div className="space-y-3">
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-500">Discussion forums for this course</p>
+            <Link
+              href="/dashboard/forums"
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              All forums →
+            </Link>
+          </div>
+          {forums?.data?.map(forum => (
+            <Link
+              key={forum.forum_id}
+              href={`/dashboard/forums/${forum.forum_id}`}
+              className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+            >
+              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <span className="text-indigo-600 text-lg">💬</span>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">{forum.title}</p>
+                <p className="text-xs text-gray-500 capitalize">{(forum as { forum_type?: string }).forum_type ?? 'general'} forum</p>
+              </div>
+            </Link>
+          ))}
+          {forums?.data?.length === 0 && (
+            <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-gray-200">
+              No forums in this course
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'announcements' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-500">Course announcements</p>
+            <Link
+              href={`/dashboard/courses/${id}/announcements`}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              Manage →
+            </Link>
         </div>
       )}
 
@@ -397,6 +495,31 @@ export default function CourseDetailPage({ params }: Props) {
               {methodError && <p className="text-xs text-red-600 mt-1">{methodError}</p>}
             </div>
           </div>
+          {announcements?.data?.map(ann => (
+            <div key={ann.announcement_id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-orange-600 text-xl">📢</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{ann.title}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {ann.published_at ? new Date(ann.published_at).toLocaleString() : 'Unpublished'}
+                  </p>
+                  {ann.body && typeof ann.body === 'object' && 'text' in ann.body && (
+                    <p className="text-sm text-gray-700 mt-2 line-clamp-3">
+                      {String((ann.body as { text: string }).text)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          {announcements?.data?.length === 0 && (
+            <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-gray-200">
+              No announcements yet
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -10,7 +10,11 @@ export type DomainEventType =
   | 'message.created'
   | 'typing.started'
   | 'course.updated'
-  | 'enrolment.created';
+  | 'enrolment.created'
+  | 'announcement.published'
+  | 'presence.updated'
+  | 'thread.created'
+  | 'thread.locked';
 
 export interface DomainEvent<T = unknown> {
   eventId: string;
@@ -30,6 +34,7 @@ export interface ChannelMessage {
 }
 
 export interface ClientMessage {
-  type: 'subscribe' | 'unsubscribe' | 'typing';
+  type: 'subscribe' | 'unsubscribe' | 'typing' | 'presence';
   channel: string;
+  status?: 'online' | 'idle' | 'offline';
 }

@@ -122,6 +122,19 @@ async function main() {
               tenantId: client.tenantId,
             })));
             break;
+          case 'presence':
+            await redis.setex(`presence:${client.tenantId}:${client.userId}`, 300, JSON.stringify({
+              userId: client.userId,
+              status: msg.status ?? 'online',
+              channel: msg.channel,
+            }));
+            nc.publish(`ako.presence.${client.tenantId}`, sc.encode(JSON.stringify({
+              userId: client.userId,
+              tenantId: client.tenantId,
+              status: msg.status ?? 'online',
+              channel: msg.channel,
+            })));
+            break;
         }
       } catch (err) {
         console.error('WS message error:', err);
@@ -222,6 +235,25 @@ async function main() {
           userId: data.userId,
         };
         broadcast(data.channel, channelMsg);
+      } catch {
+        // skip
+      }
+    }
+  })().catch(console.error);
+
+  // Subscribe to presence updates
+  const presenceSub = nc.subscribe('ako.presence.>');
+  (async () => {
+    for await (const msg of presenceSub) {
+      try {
+        const data = JSON.parse(sc.decode(msg.data)) as { userId: string; tenantId: string; status: string };
+        const channelMsg: ChannelMessage = {
+          type: 'event',
+          event: 'presence.updated',
+          channel: `tenant:${data.tenantId}`,
+          data: { userId: data.userId, status: data.status },
+        };
+        broadcast(`tenant:${data.tenantId}`, channelMsg);
       } catch {
         // skip
       }

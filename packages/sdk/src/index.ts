@@ -2,6 +2,7 @@ import type {
   Tenant, User, Course, CourseSection, CourseModule,
   Forum, ForumThread, ForumPost, Assignment, AssignmentSubmission,
   Grade, GradeItem, Message, Notification, Role, Permission,
+  Enrolment, Cohort, Announcement, PresenceSession, Conversation,
   Enrolment, Cohort, Term, CourseGroup, CourseGrouping, EnrolmentMethod,
   Enrolment, Cohort,
   RetentionPolicy, CourseArchive, ExportJob, AuditEvent,
@@ -381,6 +382,18 @@ export class AkoClient {
   async deletePost(forumId: string, threadId: string, postId: string) {
     return this.request<void>(`/forums/${forumId}/threads/${threadId}/posts/${postId}`, { method: 'DELETE' });
   }
+  async addPostReaction(forumId: string, threadId: string, postId: string, reaction: string) {
+    return this.request<{ post_id: string; reaction: string }>(
+      `/forums/${forumId}/threads/${threadId}/posts/${postId}/reactions`,
+      { method: 'POST', body: JSON.stringify({ reaction }) }
+    );
+  }
+  async removePostReaction(forumId: string, threadId: string, postId: string, reaction: string) {
+    return this.request<void>(
+      `/forums/${forumId}/threads/${threadId}/posts/${postId}/reactions/${encodeURIComponent(reaction)}`,
+      { method: 'DELETE' }
+    );
+  }
 
   // Assignments
   async getAssignment(id: string) {
@@ -412,7 +425,13 @@ export class AkoClient {
 
   // Messages
   async getConversations() {
-    return this.request<PaginatedResponse<{ conversation_id: string; title?: string; created_at: string }>>('/messages/conversations');
+    return this.request<PaginatedResponse<Conversation>>('/messages/conversations');
+  }
+  async getConversation(id: string) {
+    return this.request<Conversation>(`/messages/conversations/${id}`);
+  }
+  async createConversation(data: { member_ids: string[]; convo_type?: string; course_id?: string; cohort_id?: string }) {
+    return this.request<Conversation>('/messages/conversations', { method: 'POST', body: JSON.stringify(data) });
   }
   async getMessages(conversationId: string) {
     return this.request<PaginatedResponse<Message>>(`/messages/conversations/${conversationId}/messages`);
@@ -420,8 +439,79 @@ export class AkoClient {
   async sendMessage(conversationId: string, body: Record<string, unknown>) {
     return this.request<Message>(`/messages/conversations/${conversationId}/messages`, {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ body }),
     });
+  }
+  async markConversationRead(conversationId: string) {
+    return this.request<void>(`/messages/conversations/${conversationId}/read`, { method: 'POST' });
+  }
+  async addMessageReaction(conversationId: string, messageId: string, reaction: string) {
+    return this.request<{ message_id: string; reaction: string }>(
+      `/messages/conversations/${conversationId}/messages/${messageId}/reactions`,
+      { method: 'POST', body: JSON.stringify({ reaction }) }
+    );
+  }
+  async removeMessageReaction(conversationId: string, messageId: string, reaction: string) {
+    return this.request<void>(
+      `/messages/conversations/${conversationId}/messages/${messageId}/reactions/${encodeURIComponent(reaction)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  // Announcements
+  async getCourseAnnouncements(courseId: string, cursor?: string) {
+    const q = cursor ? `?cursor=${cursor}` : '';
+    return this.request<PaginatedResponse<Announcement>>(`/courses/${courseId}/announcements${q}`);
+  }
+  async createAnnouncement(courseId: string, data: Partial<Announcement>) {
+    return this.request<Announcement>(`/courses/${courseId}/announcements`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+  async getAnnouncement(id: string) {
+    return this.request<Announcement>(`/announcements/${id}`);
+  }
+  async updateAnnouncement(id: string, data: Partial<Announcement>) {
+    return this.request<Announcement>(`/announcements/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteAnnouncement(id: string) {
+    return this.request<void>(`/announcements/${id}`, { method: 'DELETE' });
+  }
+
+  // Presence
+  async updatePresence(data: { status: 'online' | 'idle' | 'offline'; context_type?: string; context_id?: string }) {
+    return this.request<PresenceSession>('/presence', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getPresence(userIds?: string[]) {
+    const q = userIds?.length ? `?user_ids=${userIds.join(',')}` : '';
+    return this.request<PaginatedResponse<PresenceSession>>(`/presence${q}`);
+  }
+  async setOffline() {
+    return this.request<void>('/presence', { method: 'DELETE' });
+  }
+
+  // Forum subscriptions and read tracking
+  async subscribeToThread(forumId: string, threadId: string) {
+    return this.request<void>(`/forums/${forumId}/threads/${threadId}/subscribe`, { method: 'POST' });
+  }
+  async unsubscribeFromThread(forumId: string, threadId: string) {
+    return this.request<void>(`/forums/${forumId}/threads/${threadId}/subscribe`, { method: 'DELETE' });
+  }
+  async markThreadRead(forumId: string, threadId: string) {
+    return this.request<void>(`/forums/${forumId}/threads/${threadId}/read`, { method: 'POST' });
+  }
+  async lockThread(forumId: string, threadId: string) {
+    return this.request<ForumThread>(`/forums/${forumId}/threads/${threadId}/lock`, { method: 'POST' });
+  }
+  async unlockThread(forumId: string, threadId: string) {
+    return this.request<ForumThread>(`/forums/${forumId}/threads/${threadId}/unlock`, { method: 'POST' });
+  }
+  async pinThread(forumId: string, threadId: string) {
+    return this.request<ForumThread>(`/forums/${forumId}/threads/${threadId}/pin`, { method: 'POST' });
+  }
+  async unpinThread(forumId: string, threadId: string) {
+    return this.request<ForumThread>(`/forums/${forumId}/threads/${threadId}/unpin`, { method: 'POST' });
   }
 
   // Notifications

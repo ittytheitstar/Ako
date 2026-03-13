@@ -25,6 +25,8 @@ import { fileRoutes } from './routes/files';
 import { ltiRoutes } from './routes/lti';
 import { scimRoutes } from './routes/scim';
 import { notificationRoutes } from './routes/notifications';
+import { announcementRoutes } from './routes/announcements';
+import { presenceRoutes } from './routes/presence';
 import { termRoutes } from './routes/terms';
 import { archiveRoutes } from './routes/archive';
 import { retentionRoutes } from './routes/retention';
@@ -96,6 +98,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(ltiRoutes, { prefix: '/api/v1/lti' });
   await fastify.register(scimRoutes, { prefix: '/scim/v2' });
   await fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' });
+  await fastify.register(announcementRoutes, { prefix: '/api/v1' });
+  await fastify.register(presenceRoutes, { prefix: '/api/v1/presence' });
   await fastify.register(termRoutes, { prefix: '/api/v1/terms' });
   await fastify.register(archiveRoutes, { prefix: '/api/v1/courses' });
   await fastify.register(retentionRoutes, { prefix: '/api/v1/retention-policies' });
