@@ -643,10 +643,10 @@ export class AkoClient {
     return this.request<Plugin>('/plugins', { method: 'POST', body: JSON.stringify(data) });
   }
   async enablePlugin(id: string) {
-    return this.request<Plugin>(`/plugins/${id}:enable`, { method: 'POST' });
+    return this.request<Plugin>(`/plugins/${id}/enable`, { method: 'POST' });
   }
   async disablePlugin(id: string) {
-    return this.request<Plugin>(`/plugins/${id}:disable`, { method: 'POST' });
+    return this.request<Plugin>(`/plugins/${id}/disable`, { method: 'POST' });
   }
   async uninstallPlugin(id: string) {
     return this.request<void>(`/plugins/${id}`, { method: 'DELETE' });
@@ -676,7 +676,7 @@ export class AkoClient {
   }
   async testWebhookEvent(data: { event_type: string; payload?: unknown }) {
     return this.request<{ event_type: string; webhooks_notified: number; results: unknown[] }>(
-      '/webhooks/events:test', { method: 'POST', body: JSON.stringify(data) }
+      '/webhooks/events/test', { method: 'POST', body: JSON.stringify(data) }
     );
   }
   async getWebhookDeliveries(id: string) {

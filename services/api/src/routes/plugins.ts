@@ -71,7 +71,7 @@ export async function pluginRoutes(fastify: FastifyInstance) {
   });
 
   // Enable a plugin
-  fastify.post('/:id\\:enable', { preHandler: fastify.authenticate }, async (request, reply) => {
+  fastify.post('/:id/enable', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { rows } = await pool.query(
       `UPDATE plugins SET status = 'enabled', updated_at = now()
@@ -84,7 +84,7 @@ export async function pluginRoutes(fastify: FastifyInstance) {
   });
 
   // Disable a plugin
-  fastify.post('/:id\\:disable', { preHandler: fastify.authenticate }, async (request, reply) => {
+  fastify.post('/:id/disable', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { rows } = await pool.query(
       `UPDATE plugins SET status = 'disabled', updated_at = now()

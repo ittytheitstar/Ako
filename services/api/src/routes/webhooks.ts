@@ -96,7 +96,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   });
 
   // Test event (fire a test payload)
-  fastify.post('/events\\:test', { preHandler: fastify.authenticate }, async (request, reply) => {
+  fastify.post('/events/test', { preHandler: fastify.authenticate }, async (request, reply) => {
     const { event_type, payload } = request.body as { event_type?: string; payload?: unknown };
     if (!event_type) throw BadRequest('event_type is required');
 
