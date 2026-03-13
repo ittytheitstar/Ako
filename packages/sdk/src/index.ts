@@ -421,8 +421,17 @@ export class AkoClient {
   async getGradebook(courseId: string) {
     return this.request<{ items: GradeItem[]; grades: Grade[] }>(`/courses/${courseId}/gradebook`);
   }
-  async getGradeItems(courseId: string) {
-    return this.request<PaginatedResponse<GradeItem>>(`/gradebook/${courseId}/items`);
+  async getGradeItems(courseId?: string) {
+    return this.request<{ data: GradeItem[] }>(`/gradebook/items${courseId ? `?course_id=${courseId}` : ''}`);
+  }
+  async getGrades(itemId?: string, userId?: string) {
+    const params: Record<string, string> = {};
+    if (itemId) params['item_id'] = itemId;
+    if (userId) params['user_id'] = userId;
+    return this.request<{ data: Grade[] }>(`/gradebook/grades${this.toQueryString(params)}`);
+  }
+  async upsertGrade(data: { item_id: string; user_id: string; grade?: number; feedback?: string }) {
+    return this.request<Grade>('/gradebook/grades', { method: 'POST', body: JSON.stringify(data) });
   }
   async updateGrade(itemId: string, userId: string, data: Partial<Grade>) {
     return this.request<Grade>(`/gradebook/grades`, {
@@ -903,5 +912,212 @@ export class AkoClient {
       `/completion/courses/${courseId}/evaluate`,
       { method: 'POST' }
     );
+  }
+
+  // ── Phase 9: Question Bank ────────────────────────────────────────────────────
+
+  async getQuestionCategories(params?: { course_id?: string }) {
+    return this.request<{ data: import('@ako/shared').QuestionCategory[] }>(
+      `/question-bank/categories${this.toQueryString(params)}`
+    );
+  }
+  async createQuestionCategory(data: { name: string; description?: string; parent_id?: string; course_id?: string }) {
+    return this.request<import('@ako/shared').QuestionCategory>('/question-bank/categories', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async deleteQuestionCategory(id: string) {
+    return this.request<void>(`/question-bank/categories/${id}`, { method: 'DELETE' });
+  }
+  async getQuestions(params?: { category_id?: string; status?: string; tag?: string; course_id?: string }) {
+    return this.request<{ data: import('@ako/shared').QuestionWithLatestVersion[] }>(
+      `/question-bank/questions${this.toQueryString(params)}`
+    );
+  }
+  async createQuestion(data: {
+    category_id?: string;
+    course_id?: string;
+    qtype: import('@ako/shared').QuestionType;
+    status?: import('@ako/shared').QuestionStatus;
+    tags?: string[];
+    prompt: Record<string, unknown>;
+    options?: Record<string, unknown>;
+    answer_key?: Record<string, unknown>;
+    points?: number;
+  }) {
+    return this.request<import('@ako/shared').QuestionWithLatestVersion>('/question-bank/questions', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async getQuestion(id: string) {
+    return this.request<import('@ako/shared').QuestionWithLatestVersion>(`/question-bank/questions/${id}`);
+  }
+  async updateQuestion(id: string, data: {
+    category_id?: string;
+    status?: import('@ako/shared').QuestionStatus;
+    tags?: string[];
+    prompt?: Record<string, unknown>;
+    options?: Record<string, unknown>;
+    answer_key?: Record<string, unknown>;
+    points?: number;
+  }) {
+    return this.request<import('@ako/shared').QuestionWithLatestVersion>(`/question-bank/questions/${id}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+  }
+  async deprecateQuestion(id: string) {
+    return this.request<void>(`/question-bank/questions/${id}`, { method: 'DELETE' });
+  }
+  async importQuestions(data: { questions: unknown[]; format?: 'json' | 'qti' | 'moodle' }) {
+    return this.request<{ imported: number; data: import('@ako/shared').Question[] }>('/question-bank/import', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async exportQuestions(params?: { category_id?: string; course_id?: string }) {
+    return this.request<{ format: string; count: number; questions: import('@ako/shared').QuestionWithLatestVersion[] }>(
+      `/question-bank/export${this.toQueryString(params)}`
+    );
+  }
+
+  // ── Phase 9: Quiz Enhancements ─────────────────────────────────────────────────
+
+  async getQuiz(id: string) {
+    return this.request<Record<string, unknown>>(`/quizzes/${id}`);
+  }
+  async updateQuizSettings(id: string, data: {
+    time_limit_minutes?: number;
+    open_at?: string;
+    close_at?: string;
+    max_attempts?: number;
+    attempt_spacing_minutes?: number;
+    password?: string;
+    grading_strategy?: import('@ako/shared').GradingStrategy;
+    behaviour_mode?: import('@ako/shared').BehaviourMode;
+  }) {
+    return this.request<Record<string, unknown>>(`/quizzes/${id}/settings`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+  async getQuizPools(quizId: string) {
+    return this.request<{ data: import('@ako/shared').QuizQuestionPool[] }>(`/quizzes/${quizId}/pools`);
+  }
+  async updateQuizPools(quizId: string, pools: Partial<import('@ako/shared').QuizQuestionPool>[]) {
+    return this.request<{ data: import('@ako/shared').QuizQuestionPool[] }>(`/quizzes/${quizId}/pools`, {
+      method: 'PUT', body: JSON.stringify({ pools }),
+    });
+  }
+  async getQuizAttempts(quizId: string) {
+    return this.request<{ data: Record<string, unknown>[] }>(`/quizzes/${quizId}/attempts`);
+  }
+  async getMyQuizAttempts(quizId: string) {
+    return this.request<{ data: Record<string, unknown>[] }>(`/quizzes/${quizId}/attempts/me`);
+  }
+  async startQuizAttempt(quizId: string, data?: { password?: string }) {
+    return this.request<Record<string, unknown>>(`/quizzes/${quizId}/attempts`, {
+      method: 'POST', body: JSON.stringify(data ?? {}),
+    });
+  }
+  async updateQuizAttempt(quizId: string, attemptId: string, data: {
+    status?: 'submitted' | 'graded';
+    score?: number;
+    finished_at?: string;
+  }) {
+    return this.request<Record<string, unknown>>(`/quizzes/${quizId}/attempts/${attemptId}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  // ── Phase 9: Gradebook Enhancements ───────────────────────────────────────────
+
+  async updateGradeItem(id: string, data: {
+    category_id?: string;
+    weight?: number;
+    extra_credit?: boolean;
+    hidden?: boolean;
+    locked?: boolean;
+    release_at?: string | null;
+    grade_type?: import('@ako/shared').GradeType;
+    name?: string;
+    max_grade?: number;
+  }) {
+    return this.request<import('@ako/shared').GradeItem>(`/gradebook/items/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+  async releaseGrades(data: { category_id?: string; course_id?: string; item_ids?: string[] }) {
+    return this.request<{ released: number; item_ids: string[] }>('/gradebook/items/release', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async bulkImportGrades(rows: { item_name: string; username: string; grade: number; feedback?: string }[]) {
+    return this.request<{ imported: number; errors: string[] }>('/gradebook/import', {
+      method: 'POST', body: JSON.stringify({ rows }),
+    });
+  }
+  async exportGrades(params?: { course_id?: string }) {
+    return this.request<{ count: number; data: Record<string, unknown>[] }>(
+      `/gradebook/export${this.toQueryString(params)}`
+    );
+  }
+  async getGradeCategories(params?: { course_id?: string }) {
+    return this.request<{ data: import('@ako/shared').GradeCategory[] }>(
+      `/gradebook/categories${this.toQueryString(params)}`
+    );
+  }
+  async createGradeCategory(data: {
+    course_id: string;
+    parent_id?: string;
+    name: string;
+    aggregation_strategy?: import('@ako/shared').AggregationStrategy;
+    drop_lowest?: number;
+    weight?: number;
+  }) {
+    return this.request<import('@ako/shared').GradeCategory>('/gradebook/categories', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async updateGradeCategory(id: string, data: Partial<import('@ako/shared').GradeCategory>) {
+    return this.request<import('@ako/shared').GradeCategory>(`/gradebook/categories/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+  async deleteGradeCategory(id: string) {
+    return this.request<void>(`/gradebook/categories/${id}`, { method: 'DELETE' });
+  }
+  async getGradeScales() {
+    return this.request<{ data: import('@ako/shared').GradeScale[] }>('/gradebook/scales');
+  }
+  async createGradeScale(data: { name: string; description?: string; levels: { name: string; value: number }[] }) {
+    return this.request<import('@ako/shared').GradeScale>('/gradebook/scales', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async deleteGradeScale(id: string) {
+    return this.request<void>(`/gradebook/scales/${id}`, { method: 'DELETE' });
+  }
+  async getMarkingWorkflow(params?: { course_id?: string; state?: string }) {
+    return this.request<{ data: import('@ako/shared').MarkingWorkflowStateRecord[] }>(
+      `/gradebook/marking-workflow${this.toQueryString(params)}`
+    );
+  }
+  async createMarkingWorkflowState(data: {
+    item_id: string;
+    user_id: string;
+    state?: import('@ako/shared').MarkingWorkflowState;
+    notes?: string;
+    moderator_id?: string;
+  }) {
+    return this.request<import('@ako/shared').MarkingWorkflowStateRecord>('/gradebook/marking-workflow', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+  async updateMarkingWorkflowState(id: string, data: {
+    state: import('@ako/shared').MarkingWorkflowState;
+    notes?: string;
+    moderator_id?: string;
+  }) {
+    return this.request<import('@ako/shared').MarkingWorkflowStateRecord>(`/gradebook/marking-workflow/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
   }
 }
