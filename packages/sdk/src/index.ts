@@ -6,6 +6,9 @@ import type {
   Term, CourseGroup, CourseGrouping, EnrolmentMethod,
   RetentionPolicy, CourseArchive, ExportJob, AuditEvent,
   EnrolmentReport, ActivityReport, CompletionReport,
+  Plugin, PluginVersion, Webhook, WebhookDelivery,
+  IntegrationConnector, AutomationRule, AutomationLog,
+  FeatureFlag, DeveloperApiKey,
   PaginatedResponse,
 } from '@ako/shared';
 
@@ -627,5 +630,123 @@ export class AkoClient {
       Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]))
     ).toString() : '';
     return this.request<PaginatedResponse<AuditEvent>>(`/audit/events${q}`);
+  }
+
+  // ── Phase 5: Plugins ─────────────────────────────────────────────────────────
+  async getPlugins() {
+    return this.request<{ data: Plugin[] }>('/plugins');
+  }
+  async getPlugin(id: string) {
+    return this.request<Plugin>(`/plugins/${id}`);
+  }
+  async installPlugin(data: Partial<Plugin>) {
+    return this.request<Plugin>('/plugins', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async enablePlugin(id: string) {
+    return this.request<Plugin>(`/plugins/${id}/enable`, { method: 'POST' });
+  }
+  async disablePlugin(id: string) {
+    return this.request<Plugin>(`/plugins/${id}/disable`, { method: 'POST' });
+  }
+  async uninstallPlugin(id: string) {
+    return this.request<void>(`/plugins/${id}`, { method: 'DELETE' });
+  }
+  async getPluginVersions(id: string) {
+    return this.request<{ data: PluginVersion[] }>(`/plugins/${id}/versions`);
+  }
+  async publishPluginVersion(pluginId: string, data: { version: string; changelog?: string; bundle_url?: string; bundle_hash?: string }) {
+    return this.request<PluginVersion>(`/plugins/${pluginId}/versions`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  // ── Phase 5: Webhooks ────────────────────────────────────────────────────────
+  async getWebhooks() {
+    return this.request<{ data: Webhook[] }>('/webhooks');
+  }
+  async createWebhook(data: { name: string; target_url: string; event_types?: string[]; secret?: string; active?: boolean }) {
+    return this.request<Webhook>('/webhooks', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getWebhook(id: string) {
+    return this.request<Webhook>(`/webhooks/${id}`);
+  }
+  async updateWebhook(id: string, data: Partial<{ name: string; target_url: string; event_types: string[]; active: boolean }>) {
+    return this.request<Webhook>(`/webhooks/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteWebhook(id: string) {
+    return this.request<void>(`/webhooks/${id}`, { method: 'DELETE' });
+  }
+  async testWebhookEvent(data: { event_type: string; payload?: unknown }) {
+    return this.request<{ event_type: string; webhooks_notified: number; results: unknown[] }>(
+      '/webhooks/events/test', { method: 'POST', body: JSON.stringify(data) }
+    );
+  }
+  async getWebhookDeliveries(id: string) {
+    return this.request<{ data: WebhookDelivery[] }>(`/webhooks/${id}/deliveries`);
+  }
+
+  // ── Phase 5: Integrations ────────────────────────────────────────────────────
+  async getIntegrations() {
+    return this.request<{ data: IntegrationConnector[] }>('/integrations');
+  }
+  async createIntegration(data: { name: string; connector_type: string; settings?: Record<string, unknown> }) {
+    return this.request<IntegrationConnector>('/integrations', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getIntegration(id: string) {
+    return this.request<IntegrationConnector>(`/integrations/${id}`);
+  }
+  async updateIntegration(id: string, data: Partial<IntegrationConnector>) {
+    return this.request<IntegrationConnector>(`/integrations/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteIntegration(id: string) {
+    return this.request<void>(`/integrations/${id}`, { method: 'DELETE' });
+  }
+  async getIntegrationHealth(id: string) {
+    return this.request<{ connector_id: string; name: string; health_status: string; latency_ms: number | null; last_health_check: string; error_message: string | null }>(
+      `/integrations/${id}/health`
+    );
+  }
+
+  // ── Phase 5: Automation Rules ────────────────────────────────────────────────
+  async getAutomationRules() {
+    return this.request<{ data: AutomationRule[] }>('/automation-rules');
+  }
+  async createAutomationRule(data: Partial<AutomationRule>) {
+    return this.request<AutomationRule>('/automation-rules', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getAutomationRule(id: string) {
+    return this.request<AutomationRule>(`/automation-rules/${id}`);
+  }
+  async updateAutomationRule(id: string, data: Partial<AutomationRule>) {
+    return this.request<AutomationRule>(`/automation-rules/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteAutomationRule(id: string) {
+    return this.request<void>(`/automation-rules/${id}`, { method: 'DELETE' });
+  }
+  async getAutomationLogs(ruleId: string) {
+    return this.request<{ data: AutomationLog[] }>(`/automation-rules/${ruleId}/logs`);
+  }
+
+  // ── Phase 5: Feature Flags ───────────────────────────────────────────────────
+  async getFeatureFlags() {
+    return this.request<{ data: FeatureFlag[] }>('/feature-flags');
+  }
+  async createFeatureFlag(data: Partial<FeatureFlag>) {
+    return this.request<FeatureFlag>('/feature-flags', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async updateFeatureFlag(id: string, data: Partial<FeatureFlag>) {
+    return this.request<FeatureFlag>(`/feature-flags/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteFeatureFlag(id: string) {
+    return this.request<void>(`/feature-flags/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 5: Developer API Keys ──────────────────────────────────────────────
+  async getDeveloperKeys() {
+    return this.request<{ data: DeveloperApiKey[] }>('/developer/keys');
+  }
+  async createDeveloperKey(data: { name: string; scopes?: string[]; expires_at?: string }) {
+    return this.request<DeveloperApiKey & { key: string }>('/developer/keys', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async revokeDeveloperKey(id: string) {
+    return this.request<void>(`/developer/keys/${id}`, { method: 'DELETE' });
   }
 }

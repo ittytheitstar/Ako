@@ -418,3 +418,132 @@ export interface CompletionReport {
   completed_count: number;
   completion_rate: number;
 }
+
+// ── Phase 5 Types ─────────────────────────────────────────────────────────────
+
+export interface Plugin {
+  plugin_id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  plugin_type: 'ui' | 'backend' | 'automation';
+  api_version: string;
+  permission_scopes: string[];
+  author?: string;
+  homepage_url?: string;
+  status: 'disabled' | 'enabled' | 'error';
+  enabled_contexts: unknown[];
+  resource_limits: Record<string, unknown>;
+  installed_by?: string;
+  installed_at: string;
+  updated_at: string;
+}
+
+export interface PluginVersion {
+  version_id: string;
+  plugin_id: string;
+  version: string;
+  changelog?: string;
+  bundle_url?: string;
+  bundle_hash?: string;
+  is_current: boolean;
+  published_at: string;
+}
+
+export interface Webhook {
+  webhook_id: string;
+  tenant_id: string;
+  name: string;
+  target_url: string;
+  event_types: string[];
+  active: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  last_fired_at?: string;
+  failure_count: number;
+}
+
+export interface WebhookDelivery {
+  delivery_id: string;
+  webhook_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  status: 'pending' | 'delivered' | 'failed';
+  http_status?: number;
+  response_body?: string;
+  attempt: number;
+  fired_at: string;
+  next_retry_at?: string;
+}
+
+export interface IntegrationConnector {
+  connector_id: string;
+  tenant_id: string;
+  name: string;
+  connector_type: 'sis' | 'sms' | 'identity' | 'assessment' | 'content' | 'analytics';
+  settings: Record<string, unknown>;
+  status: 'connected' | 'disconnected' | 'error';
+  health_status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+  last_health_check?: string;
+  latency_ms?: number;
+  error_message?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutomationRule {
+  rule_id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  trigger_event: string;
+  conditions: unknown[];
+  actions: unknown[];
+  active: boolean;
+  last_triggered_at?: string;
+  trigger_count: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutomationLog {
+  log_id: string;
+  rule_id: string;
+  tenant_id: string;
+  trigger_event: string;
+  trigger_payload: Record<string, unknown>;
+  actions_taken: unknown[];
+  outcome: 'success' | 'skipped' | 'error';
+  error_message?: string;
+  created_at: string;
+}
+
+export interface FeatureFlag {
+  flag_id: string;
+  tenant_id?: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  rollout_pct: number;
+  context: 'global' | 'tenant' | 'course';
+  metadata: Record<string, unknown>;
+  changed_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeveloperApiKey {
+  key_id: string;
+  tenant_id: string;
+  user_id: string;
+  name: string;
+  key_prefix: string;
+  scopes: string[];
+  active: boolean;
+  last_used_at?: string;
+  expires_at?: string;
+  created_at: string;
+}

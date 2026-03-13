@@ -33,6 +33,12 @@ import { retentionRoutes } from './routes/retention';
 import { reportRoutes } from './routes/reports';
 import { exportRoutes } from './routes/exports';
 import { auditRoutes } from './routes/audit';
+import { pluginRoutes } from './routes/plugins';
+import { webhookRoutes } from './routes/webhooks';
+import { integrationRoutes } from './routes/integrations';
+import { automationRoutes } from './routes/automation';
+import { featureFlagRoutes } from './routes/feature-flags';
+import { developerKeyRoutes } from './routes/developer-keys';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -106,6 +112,14 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(reportRoutes, { prefix: '/api/v1/reports' });
   await fastify.register(exportRoutes, { prefix: '/api/v1/exports' });
   await fastify.register(auditRoutes, { prefix: '/api/v1/audit' });
+
+  // Phase 5 routes
+  await fastify.register(pluginRoutes, { prefix: '/api/v1/plugins' });
+  await fastify.register(webhookRoutes, { prefix: '/api/v1/webhooks' });
+  await fastify.register(integrationRoutes, { prefix: '/api/v1/integrations' });
+  await fastify.register(automationRoutes, { prefix: '/api/v1/automation-rules' });
+  await fastify.register(featureFlagRoutes, { prefix: '/api/v1/feature-flags' });
+  await fastify.register(developerKeyRoutes, { prefix: '/api/v1/developer/keys' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
