@@ -1,6 +1,6 @@
 'use client';
-import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { use } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 
@@ -21,10 +21,7 @@ const moduleIcons: Record<string, string> = {
 type Tab = 'content' | 'groups' | 'enrolments';
 
 export default function CourseDetailPage({ params }: Props) {
-  const { id } = React.use(params);
-  const [activeTab, setActiveTab] = useState<Tab>('content');
-  const queryClient = useQueryClient();
-
+  const { id } = use(params);
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course', id],
     queryFn: () => apiClient.getCourse(id),

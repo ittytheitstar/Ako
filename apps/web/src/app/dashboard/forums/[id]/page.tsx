@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, use } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ interface Props { params: Promise<{ id: string }> }
 
 export default function ForumPage({ params }: Props) {
   const { id } = React.use(params);
+  const { id } = use(params);
   const qc = useQueryClient();
   const [newTitle, setNewTitle] = useState('');
   const [showNew, setShowNew] = useState(false);

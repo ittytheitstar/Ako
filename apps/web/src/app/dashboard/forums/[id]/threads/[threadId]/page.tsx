@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, getAccessToken } from '@/lib/api';
 import { RealtimeClient } from '@/lib/ws';
@@ -9,6 +9,7 @@ interface Props { params: Promise<{ id: string; threadId: string }> }
 
 export default function ThreadPage({ params }: Props) {
   const { id, threadId } = React.use(params);
+  const { id, threadId } = use(params);
   const qc = useQueryClient();
   const [reply, setReply] = useState('');
   const rtRef = useRef<RealtimeClient | null>(null);
