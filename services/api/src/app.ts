@@ -39,6 +39,10 @@ import { integrationRoutes } from './routes/integrations';
 import { automationRoutes } from './routes/automation';
 import { featureFlagRoutes } from './routes/feature-flags';
 import { developerKeyRoutes } from './routes/developer-keys';
+import { metricsRoutes } from './routes/metrics';
+import { rateLimitRoutes } from './routes/rate-limits';
+import { permissionAuditRoutes } from './routes/permission-audit';
+import { systemAlertRoutes } from './routes/system-alerts';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -120,6 +124,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(automationRoutes, { prefix: '/api/v1/automation-rules' });
   await fastify.register(featureFlagRoutes, { prefix: '/api/v1/feature-flags' });
   await fastify.register(developerKeyRoutes, { prefix: '/api/v1/developer/keys' });
+
+  // Phase 6 routes
+  await fastify.register(metricsRoutes, { prefix: '/api/v1' });
+  await fastify.register(rateLimitRoutes, { prefix: '/api/v1/rate-limits' });
+  await fastify.register(permissionAuditRoutes, { prefix: '/api/v1/permission-audit' });
+  await fastify.register(systemAlertRoutes, { prefix: '/api/v1/system-alerts' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {

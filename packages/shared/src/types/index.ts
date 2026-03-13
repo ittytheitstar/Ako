@@ -547,3 +547,112 @@ export interface DeveloperApiKey {
   expires_at?: string;
   created_at: string;
 }
+
+// ── Phase 6 Types ─────────────────────────────────────────────────────────────
+
+export interface RateLimitConfig {
+  config_id: string;
+  tenant_id?: string;
+  route_pattern?: string;
+  window_seconds: number;
+  max_requests: number;
+  max_write_requests?: number;
+  burst_multiplier: number;
+  scope: 'global' | 'tenant' | 'api_key';
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PermissionAuditLog {
+  audit_id: string;
+  tenant_id: string;
+  actor_id?: string;
+  permission_name: string;
+  resource_type?: string;
+  resource_id?: string;
+  granted: boolean;
+  denial_reason?: string;
+  ip?: string;
+  user_agent?: string;
+  checked_at: string;
+}
+
+export interface MetricSnapshot {
+  snapshot_id: string;
+  tenant_id?: string;
+  metric_name: string;
+  value: number;
+  labels: Record<string, unknown>;
+  period_start: string;
+  period_end: string;
+  recorded_at: string;
+}
+
+export interface MetricsSummary {
+  http: {
+    requests_total: number;
+    errors_total: number;
+    error_rate_pct: number;
+    latency_ms: { p50: number; p95: number; p99: number };
+  };
+  database: {
+    pool_active_connections: number;
+    ping_ms: number;
+  };
+  process: {
+    uptime_seconds: number;
+    memory_mb: number;
+  };
+  collected_at: string;
+}
+
+export interface SystemAlert {
+  alert_id: string;
+  tenant_id?: string;
+  name: string;
+  description?: string;
+  metric_name: string;
+  threshold_value: number;
+  comparison: 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+  window_seconds: number;
+  severity: 'info' | 'warning' | 'critical';
+  active: boolean;
+  notify_channels: string[];
+  last_evaluated_at?: string;
+  last_triggered_at?: string;
+  trigger_count: number;
+  resolved_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SystemAlertEvent {
+  event_id: string;
+  alert_id: string;
+  tenant_id?: string;
+  metric_value: number;
+  threshold_value: number;
+  severity: string;
+  status: 'triggered' | 'resolved';
+  message?: string;
+  triggered_at: string;
+  resolved_at?: string;
+  alert_name?: string;
+  metric_name?: string;
+}
+
+export interface PermissionMatrix {
+  roles: Array<{
+    role_id: string;
+    role_name: string;
+    permissions: string[];
+  }>;
+  permissions: Array<{
+    permission_id: string;
+    name: string;
+    description?: string;
+  }>;
+}
