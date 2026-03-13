@@ -1,11 +1,11 @@
 'use client';
-import React from 'react';
+import React, { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const moduleIcons: Record<string, string> = {
@@ -19,24 +19,25 @@ const moduleIcons: Record<string, string> = {
 };
 
 export default function CourseDetailPage({ params }: Props) {
+  const { id } = use(params);
   const { data: course, isLoading: courseLoading } = useQuery({
-    queryKey: ['course', params.id],
-    queryFn: () => apiClient.getCourse(params.id),
+    queryKey: ['course', id],
+    queryFn: () => apiClient.getCourse(id),
   });
 
   const { data: sections } = useQuery({
-    queryKey: ['sections', params.id],
-    queryFn: () => apiClient.getSections(params.id),
+    queryKey: ['sections', id],
+    queryFn: () => apiClient.getSections(id),
   });
 
   const { data: modules } = useQuery({
-    queryKey: ['modules', params.id],
-    queryFn: () => apiClient.getModules(params.id),
+    queryKey: ['modules', id],
+    queryFn: () => apiClient.getModules(id),
   });
 
   const { data: gradebook } = useQuery({
-    queryKey: ['gradebook', params.id],
-    queryFn: () => apiClient.getGradebook(params.id),
+    queryKey: ['gradebook', id],
+    queryFn: () => apiClient.getGradebook(id),
   });
 
   if (courseLoading) {

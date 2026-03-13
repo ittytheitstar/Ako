@@ -3,6 +3,8 @@ import type {
   Forum, ForumThread, ForumPost, Assignment, AssignmentSubmission,
   Grade, GradeItem, Message, Notification, Role, Permission,
   Enrolment, Cohort,
+  RetentionPolicy, CourseArchive, ExportJob, AuditEvent,
+  EnrolmentReport, ActivityReport, CompletionReport,
   PaginatedResponse,
 } from '@ako/shared';
 
@@ -324,5 +326,109 @@ export class AkoClient {
   }
   async markAllNotificationsRead() {
     return this.request<void>('/notifications/read-all', { method: 'POST' });
+  }
+
+  // ── Phase 4: Archiving ──────────────────────────────────────────────────────
+  async archiveCourse(courseId: string, data?: { notes?: string; trigger_type?: string }) {
+    return this.request<CourseArchive>(`/courses/${courseId}/archive`, {
+      method: 'POST',
+      body: JSON.stringify(data ?? {}),
+    });
+  }
+  async restoreCourse(courseId: string) {
+    return this.request<Course>(`/courses/${courseId}/restore`, { method: 'POST' });
+  }
+  async getCourseArchive(courseId: string) {
+    return this.request<CourseArchive>(`/courses/${courseId}/archive`);
+  }
+  async setLegalHold(courseId: string, hold: boolean) {
+    return this.request<Course>(`/courses/${courseId}/legal-hold`, {
+      method: 'POST',
+      body: JSON.stringify({ hold }),
+    });
+  }
+  async assignRetentionPolicy(courseId: string, policyId: string) {
+    return this.request<Course>(`/courses/${courseId}/retention-policy`, {
+      method: 'POST',
+      body: JSON.stringify({ policy_id: policyId }),
+    });
+  }
+
+  // ── Phase 4: Retention Policies ─────────────────────────────────────────────
+  async getRetentionPolicies(cursor?: string) {
+    const q = cursor ? `?cursor=${cursor}` : '';
+    return this.request<PaginatedResponse<RetentionPolicy>>(`/retention-policies${q}`);
+  }
+  async getRetentionPolicy(id: string) {
+    return this.request<RetentionPolicy>(`/retention-policies/${id}`);
+  }
+  async createRetentionPolicy(data: Partial<RetentionPolicy>) {
+    return this.request<RetentionPolicy>('/retention-policies', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+  async updateRetentionPolicy(id: string, data: Partial<RetentionPolicy>) {
+    return this.request<RetentionPolicy>(`/retention-policies/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+  async deleteRetentionPolicy(id: string) {
+    return this.request<void>(`/retention-policies/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 4: Reports ─────────────────────────────────────────────────────────
+  async getEnrolmentReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: EnrolmentReport[] }>(`/reports/enrolments${q}`);
+  }
+  async getActivityReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: ActivityReport[] }>(`/reports/activity${q}`);
+  }
+  async getCompletionReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: CompletionReport[] }>(`/reports/completion${q}`);
+  }
+  async getForumEngagementReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: Record<string, unknown>[] }>(`/reports/forum-engagement${q}`);
+  }
+
+  // ── Phase 4: Exports ─────────────────────────────────────────────────────────
+  async createExport(data: {
+    export_type: 'course_archive' | 'assessment_evidence' | 'engagement_metrics';
+    course_id?: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    return this.request<ExportJob>('/exports', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getExports(cursor?: string) {
+    const q = cursor ? `?cursor=${cursor}` : '';
+    return this.request<PaginatedResponse<ExportJob>>(`/exports${q}`);
+  }
+  async getExportStatus(id: string) {
+    return this.request<ExportJob>(`/exports/${id}/status`);
+  }
+  async getExportDownload(id: string) {
+    return this.request<{ export_id: string; file_key: string; download_url: string; expires_at: string }>(
+      `/exports/${id}/download`
+    );
+  }
+
+  // ── Phase 4: Audit ───────────────────────────────────────────────────────────
+  async getAuditEvents(params?: {
+    cursor?: string;
+    limit?: number;
+    event_type?: string;
+    resource_type?: string;
+    resource_id?: string;
+    actor_id?: string;
+  }) {
+    const q = params ? '?' + new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]))
+    ).toString() : '';
+    return this.request<PaginatedResponse<AuditEvent>>(`/audit/events${q}`);
   }
 }
