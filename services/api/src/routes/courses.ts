@@ -440,12 +440,11 @@ export async function courseRoutes(fastify: FastifyInstance) {
     const { groupingId } = request.params as { id: string; groupingId: string };
     const body = z.object({ group_ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
     if (!body.success) throw BadRequest(body.error.message);
-    for (const gid of body.data.group_ids) {
-      await pool.query(
-        `INSERT INTO course_grouping_groups (grouping_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-        [groupingId, gid]
-      );
-    }
+    await pool.query(
+      `INSERT INTO course_grouping_groups (grouping_id, group_id)
+       SELECT $1, unnest($2::uuid[]) ON CONFLICT DO NOTHING`,
+      [groupingId, body.data.group_ids]
+    );
     return reply.status(201).send({ grouping_id: groupingId, group_ids: body.data.group_ids });
   });
 

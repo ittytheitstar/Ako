@@ -140,12 +140,10 @@ export async function cohortRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string };
     const body = z.object({ user_ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
     if (!body.success) throw BadRequest(body.error.message);
-    for (const userId of body.data.user_ids) {
-      await pool.query(
-        `INSERT INTO cohort_members (cohort_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-        [id, userId]
-      );
-    }
+    await pool.query(
+      `INSERT INTO cohort_members (cohort_id, user_id) SELECT $1, unnest($2::uuid[]) ON CONFLICT DO NOTHING`,
+      [id, body.data.user_ids]
+    );
     await syncCohortEnrolments(request.tenantId, id, body.data.user_ids);
     await pool.query(
       `INSERT INTO outbox_events (tenant_id, topic, key, payload) VALUES ($1, $2, $3, $4)`,
@@ -158,17 +156,15 @@ export async function cohortRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string };
     const body = z.object({ user_ids: z.array(z.string().uuid()).min(1) }).safeParse(request.body);
     if (!body.success) throw BadRequest(body.error.message);
-    for (const userId of body.data.user_ids) {
-      await pool.query(
-        `DELETE FROM cohort_members WHERE cohort_id = $1 AND user_id = $2`,
-        [id, userId]
-      );
-      await pool.query(
-        `UPDATE enrolments SET status = 'suspended'
-         WHERE cohort_id = $1 AND user_id = $2 AND tenant_id = $3`,
-        [id, userId, request.tenantId]
-      );
-    }
+    await pool.query(
+      `DELETE FROM cohort_members WHERE cohort_id = $1 AND user_id = ANY($2::uuid[])`,
+      [id, body.data.user_ids]
+    );
+    await pool.query(
+      `UPDATE enrolments SET status = 'suspended'
+       WHERE cohort_id = $1 AND user_id = ANY($2::uuid[]) AND tenant_id = $3`,
+      [id, body.data.user_ids, request.tenantId]
+    );
     await pool.query(
       `INSERT INTO outbox_events (tenant_id, topic, key, payload) VALUES ($1, $2, $3, $4)`,
       [request.tenantId, 'cohort.member.removed', id, JSON.stringify({ cohort_id: id, user_ids: body.data.user_ids })]
@@ -199,13 +195,14 @@ export async function cohortRoutes(fastify: FastifyInstance) {
     let added = 0;
     for (const method of methods) {
       for (const member of members) {
-        await pool.query(
+        const result = await pool.query(
           `INSERT INTO enrolments (tenant_id, course_id, user_id, role, status, cohort_id)
            VALUES ($1, $2, $3, $4, 'active', $5)
-           ON CONFLICT (tenant_id, course_id, user_id) DO UPDATE SET status = 'active'`,
+           ON CONFLICT (tenant_id, course_id, user_id) DO UPDATE SET status = 'active'
+           RETURNING (xmax = 0) AS inserted`,
           [request.tenantId, method.course_id, member.user_id, method.default_role, id]
         );
-        added++;
+        if (result.rows[0]?.inserted) added++;
       }
     }
 
