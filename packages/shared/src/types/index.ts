@@ -45,6 +45,9 @@ export interface Course {
   title: string;
   description?: string;
   visibility: 'private' | 'tenant' | 'public';
+  status: 'draft' | 'published';
+  published_at?: string;
+  term_id?: string;
   status: 'draft' | 'published' | 'completed' | 'archived' | 'deleted';
   created_by?: string;
   created_at: string;
@@ -232,6 +235,44 @@ export interface ProblemDetails {
   instance?: string;
 }
 
+export interface Term {
+  term_id: string;
+  tenant_id: string;
+  name: string;
+  code: string;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
+export interface CourseGroup {
+  group_id: string;
+  tenant_id: string;
+  course_id: string;
+  cohort_id?: string;
+  name: string;
+  created_at: string;
+}
+
+export interface CourseGrouping {
+  grouping_id: string;
+  tenant_id: string;
+  course_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface EnrolmentMethod {
+  method_id: string;
+  tenant_id: string;
+  course_id: string;
+  method_type: 'manual' | 'cohort_sync';
+  cohort_id?: string;
+  default_role: string;
+  create_group: boolean;
+  active: boolean;
+  created_at: string;
+}
 export interface RetentionPolicy {
   policy_id: string;
   tenant_id: string;

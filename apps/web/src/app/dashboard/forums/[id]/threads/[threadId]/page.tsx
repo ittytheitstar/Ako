@@ -8,6 +8,7 @@ import Link from 'next/link';
 interface Props { params: Promise<{ id: string; threadId: string }> }
 
 export default function ThreadPage({ params }: Props) {
+  const { id, threadId } = React.use(params);
   const { id, threadId } = use(params);
   const qc = useQueryClient();
   const [reply, setReply] = useState('');
