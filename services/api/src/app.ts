@@ -25,6 +25,11 @@ import { fileRoutes } from './routes/files';
 import { ltiRoutes } from './routes/lti';
 import { scimRoutes } from './routes/scim';
 import { notificationRoutes } from './routes/notifications';
+import { archiveRoutes } from './routes/archive';
+import { retentionRoutes } from './routes/retention';
+import { reportRoutes } from './routes/reports';
+import { exportRoutes } from './routes/exports';
+import { auditRoutes } from './routes/audit';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -90,17 +95,23 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(ltiRoutes, { prefix: '/api/v1/lti' });
   await fastify.register(scimRoutes, { prefix: '/scim/v2' });
   await fastify.register(notificationRoutes, { prefix: '/api/v1/notifications' });
+  await fastify.register(archiveRoutes, { prefix: '/api/v1/courses' });
+  await fastify.register(retentionRoutes, { prefix: '/api/v1/retention-policies' });
+  await fastify.register(reportRoutes, { prefix: '/api/v1/reports' });
+  await fastify.register(exportRoutes, { prefix: '/api/v1/exports' });
+  await fastify.register(auditRoutes, { prefix: '/api/v1/audit' });
 
-  fastify.setErrorHandler((error, _request, reply) => {
+  fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
       return reply.status(error.status).send(error.toJSON());
     }
-    if (error.statusCode === 400) {
+    const err = error as { statusCode?: number; message?: string };
+    if (err.statusCode === 400) {
       return reply.status(400).send({
         type: 'https://ako.invalid/errors/bad-request',
         title: 'Bad Request',
         status: 400,
-        detail: error.message,
+        detail: err.message,
       });
     }
     fastify.log.error(error);

@@ -36,10 +36,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: '⊞' },
     { label: 'Courses', href: '/dashboard/courses', icon: '📚' },
+    { label: 'Past Courses', href: '/dashboard/courses/archived', icon: '📦' },
     { label: 'Forums', href: '/dashboard/forums', icon: '💬' },
     { label: 'Assignments', href: '/dashboard/assignments', icon: '📝' },
     { label: 'Grades', href: '/dashboard/grades', icon: '📊' },
     { label: 'Messages', href: '/dashboard/messages', icon: '✉' },
+    { label: 'Reports', href: '/dashboard/reports', icon: '📈' },
+    { label: 'Archive', href: '/dashboard/admin/archive', icon: '🗄' },
+    { label: 'Retention', href: '/dashboard/admin/retention', icon: '📋' },
+    { label: 'Compliance', href: '/dashboard/admin/compliance', icon: '🛡' },
   ];
 
   return (
