@@ -45,10 +45,17 @@ export interface Course {
   title: string;
   description?: string;
   visibility: 'private' | 'tenant' | 'public';
+  status: 'draft' | 'published';
+  published_at?: string;
+  term_id?: string;
+  status: 'draft' | 'published' | 'completed' | 'archived' | 'deleted';
   created_by?: string;
   created_at: string;
   updated_at: string;
   archived_at?: string;
+  policy_id?: string;
+  retention_until?: string;
+  legal_hold: boolean;
 }
 
 export interface CourseSection {
@@ -272,4 +279,143 @@ export interface ProblemDetails {
   status: number;
   detail?: string;
   instance?: string;
+}
+
+export interface Term {
+  term_id: string;
+  tenant_id: string;
+  name: string;
+  code: string;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+}
+
+export interface CourseGroup {
+  group_id: string;
+  tenant_id: string;
+  course_id: string;
+  cohort_id?: string;
+  name: string;
+  created_at: string;
+}
+
+export interface CourseGrouping {
+  grouping_id: string;
+  tenant_id: string;
+  course_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface EnrolmentMethod {
+  method_id: string;
+  tenant_id: string;
+  course_id: string;
+  method_type: 'manual' | 'cohort_sync';
+  cohort_id?: string;
+  default_role: string;
+  create_group: boolean;
+  active: boolean;
+  created_at: string;
+}
+export interface RetentionPolicy {
+  policy_id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  course_type?: string;
+  programme?: string;
+  regulatory_requirement?: string;
+  retention_months: number;
+  access_level: 'read_only' | 'restricted' | 'none';
+  disposal_action: 'archive' | 'delete' | 'export';
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseArchive {
+  archive_id: string;
+  tenant_id: string;
+  course_id: string;
+  archived_by?: string;
+  archived_at: string;
+  restored_at?: string;
+  restored_by?: string;
+  trigger_type: 'manual' | 'scheduled' | 'cohort_end' | 'course_end';
+  snapshot: Record<string, unknown>;
+  integrity_hash?: string;
+  immutable: boolean;
+  notes?: string;
+}
+
+export interface AnalyticsSnapshot {
+  snapshot_id: string;
+  tenant_id: string;
+  course_id?: string;
+  cohort_id?: string;
+  snapshot_type: 'enrolments' | 'activity' | 'forum_engagement' | 'completion';
+  period_start: string;
+  period_end: string;
+  data: Record<string, unknown>;
+  generated_at: string;
+}
+
+export interface ExportJob {
+  export_id: string;
+  tenant_id: string;
+  course_id?: string;
+  requested_by: string;
+  export_type: 'course_archive' | 'assessment_evidence' | 'engagement_metrics';
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  file_key?: string;
+  file_size_bytes?: number;
+  error_message?: string;
+  started_at?: string;
+  completed_at?: string;
+  expires_at?: string;
+  created_at: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface AuditEvent {
+  event_id: string;
+  tenant_id: string;
+  actor_id?: string;
+  event_type: string;
+  resource_type?: string;
+  resource_id?: string;
+  ip?: string;
+  user_agent?: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface EnrolmentReport {
+  course_id: string;
+  course_code: string;
+  title: string;
+  total_enrolments: number;
+  active_enrolments: number;
+  completed_enrolments: number;
+  suspended_enrolments: number;
+}
+
+export interface ActivityReport {
+  course_id: string;
+  course_code: string;
+  title: string;
+  total_posts: number;
+  total_submissions: number;
+  active_learners: number;
+}
+
+export interface CompletionReport {
+  course_id: string;
+  course_code: string;
+  title: string;
+  total_enrolments: number;
+  completed_count: number;
+  completion_rate: number;
 }

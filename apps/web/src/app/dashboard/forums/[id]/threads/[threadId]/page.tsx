@@ -10,6 +10,9 @@ interface Props { params: Promise<{ id: string; threadId: string }> }
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 export default function ThreadPage({ params }: Props) {
+
+export default function ThreadPage({ params }: Props) {
+  const { id, threadId } = React.use(params);
   const { id, threadId } = use(params);
   const qc = useQueryClient();
   const [reply, setReply] = useState('');
@@ -23,6 +26,7 @@ export default function ThreadPage({ params }: Props) {
   });
 
   const { data: posts, isLoading, refetch: refetchPosts } = useQuery({
+  const { data: posts, isLoading } = useQuery({
     queryKey: ['posts', id, threadId],
     queryFn: () => apiClient.getPosts(id, threadId),
   });
@@ -44,6 +48,8 @@ export default function ThreadPage({ params }: Props) {
         setTimeout(() => {
           setTypingUsers(prev => { const n = new Set(prev); n.delete(uid); return n; });
         }, 3000);
+      if (msg.type === 'event' && (msg.event === 'post.created' || msg.event === 'post.updated')) {
+        qc.invalidateQueries({ queryKey: ['posts', id, threadId] });
       }
     });
     rtRef.current = rt;
@@ -65,6 +71,11 @@ export default function ThreadPage({ params }: Props) {
     mutationFn: (text: string) => apiClient.createPost(id, threadId, { body: { text } }),
     onSuccess: () => {
       refetchPosts();
+
+  const createPost = useMutation({
+    mutationFn: (text: string) => apiClient.createPost(id, threadId, { text }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['posts', id, threadId] });
       setReply('');
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     },

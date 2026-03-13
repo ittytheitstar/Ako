@@ -3,6 +3,10 @@ import type {
   Forum, ForumThread, ForumPost, Assignment, AssignmentSubmission,
   Grade, GradeItem, Message, Notification, Role, Permission,
   Enrolment, Cohort, Announcement, PresenceSession, Conversation,
+  Enrolment, Cohort, Term, CourseGroup, CourseGrouping, EnrolmentMethod,
+  Enrolment, Cohort,
+  RetentionPolicy, CourseArchive, ExportJob, AuditEvent,
+  EnrolmentReport, ActivityReport, CompletionReport,
   PaginatedResponse,
 } from '@ako/shared';
 
@@ -232,6 +236,113 @@ export class AkoClient {
   async deleteCohort(id: string) {
     return this.request<void>(`/cohorts/${id}`, { method: 'DELETE' });
   }
+  async getCohortMembers(id: string) {
+    return this.request<PaginatedResponse<User & { added_at: string }>>(`/cohorts/${id}/members`);
+  }
+  async addCohortMember(cohortId: string, userId: string) {
+    return this.request<{ cohort_id: string; user_id: string }>(`/cohorts/${cohortId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+  async removeCohortMember(cohortId: string, userId: string) {
+    return this.request<void>(`/cohorts/${cohortId}/members/${userId}`, { method: 'DELETE' });
+  }
+  async bulkAddCohortMembers(cohortId: string, userIds: string[]) {
+    return this.request<{ cohort_id: string; added: number }>(`/cohorts/${cohortId}/members/bulkAdd`, {
+      method: 'POST',
+      body: JSON.stringify({ user_ids: userIds }),
+    });
+  }
+  async bulkRemoveCohortMembers(cohortId: string, userIds: string[]) {
+    return this.request<{ cohort_id: string; removed: number }>(`/cohorts/${cohortId}/members/bulkRemove`, {
+      method: 'POST',
+      body: JSON.stringify({ user_ids: userIds }),
+    });
+  }
+  async reconcileCohortSync(cohortId: string) {
+    return this.request<{ cohort_id: string; courses_synced: number; enrolments_upserted: number }>(`/cohorts/${cohortId}/sync/reconcile`, { method: 'POST' });
+  }
+  async getCohortCourses(cohortId: string) {
+    return this.request<PaginatedResponse<Course & { method_id: string; method_type: string; default_role: string }>>(`/cohorts/${cohortId}/courses`);
+  }
+
+  // Terms
+  async getTerms() {
+    return this.request<PaginatedResponse<Term>>('/terms');
+  }
+  async getTerm(id: string) {
+    return this.request<Term>(`/terms/${id}`);
+  }
+  async createTerm(data: Partial<Term>) {
+    return this.request<Term>('/terms', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async updateTerm(id: string, data: Partial<Term>) {
+    return this.request<Term>(`/terms/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteTerm(id: string) {
+    return this.request<void>(`/terms/${id}`, { method: 'DELETE' });
+  }
+
+  // Course publish
+  async publishCourse(id: string) {
+    return this.request<Course>(`/courses/${id}/publish`, { method: 'POST' });
+  }
+
+  // Course groups
+  async getCourseGroups(courseId: string) {
+    return this.request<PaginatedResponse<CourseGroup>>(`/courses/${courseId}/groups`);
+  }
+  async createCourseGroup(courseId: string, data: { name: string; cohort_id?: string }) {
+    return this.request<CourseGroup>(`/courses/${courseId}/groups`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async deleteCourseGroup(courseId: string, groupId: string) {
+    return this.request<void>(`/courses/${courseId}/groups/${groupId}`, { method: 'DELETE' });
+  }
+
+  // Course groupings
+  async getCourseGroupings(courseId: string) {
+    return this.request<PaginatedResponse<CourseGrouping & { groups: { group_id: string; name: string }[] }>>(`/courses/${courseId}/groupings`);
+  }
+  async createCourseGrouping(courseId: string, data: { name: string }) {
+    return this.request<CourseGrouping>(`/courses/${courseId}/groupings`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async addGroupsToGrouping(courseId: string, groupingId: string, groupIds: string[]) {
+    return this.request<{ grouping_id: string; group_ids: string[] }>(`/courses/${courseId}/groupings/${groupingId}/groups`, {
+      method: 'POST',
+      body: JSON.stringify({ group_ids: groupIds }),
+    });
+  }
+  async deleteCourseGrouping(courseId: string, groupingId: string) {
+    return this.request<void>(`/courses/${courseId}/groupings/${groupingId}`, { method: 'DELETE' });
+  }
+
+  // Enrolment methods
+  async getEnrolmentMethods(courseId: string) {
+    return this.request<PaginatedResponse<EnrolmentMethod>>(`/courses/${courseId}/enrolment-methods`);
+  }
+  async createEnrolmentMethod(courseId: string, data: Partial<EnrolmentMethod>) {
+    return this.request<EnrolmentMethod>(`/courses/${courseId}/enrolment-methods`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  async deleteEnrolmentMethod(courseId: string, methodId: string) {
+    return this.request<void>(`/courses/${courseId}/enrolment-methods/${methodId}`, { method: 'DELETE' });
+  }
+
+  // Reconciliation
+  async reconcileCourseEnrolments(courseId: string) {
+    return this.request<{ course_id: string; added: number; suspended: number; methods_processed: number }>(`/courses/${courseId}/enrolments/reconcile`, { method: 'POST' });
+  }
+
+  // Module visibility / move
+  async hideModule(courseId: string, moduleId: string) {
+    return this.request<CourseModule>(`/courses/${courseId}/modules/${moduleId}/hide`, { method: 'POST' });
+  }
+  async showModule(courseId: string, moduleId: string) {
+    return this.request<CourseModule>(`/courses/${courseId}/modules/${moduleId}/show`, { method: 'POST' });
+  }
+  async moveModule(courseId: string, moduleId: string, data: { position: number; section_id?: string }) {
+    return this.request<CourseModule>(`/courses/${courseId}/modules/${moduleId}/move`, { method: 'POST', body: JSON.stringify(data) });
+  }
 
   // Forums
   async getForums(params?: Record<string, string>) {
@@ -413,5 +524,109 @@ export class AkoClient {
   }
   async markAllNotificationsRead() {
     return this.request<void>('/notifications/read-all', { method: 'POST' });
+  }
+
+  // ── Phase 4: Archiving ──────────────────────────────────────────────────────
+  async archiveCourse(courseId: string, data?: { notes?: string; trigger_type?: string }) {
+    return this.request<CourseArchive>(`/courses/${courseId}/archive`, {
+      method: 'POST',
+      body: JSON.stringify(data ?? {}),
+    });
+  }
+  async restoreCourse(courseId: string) {
+    return this.request<Course>(`/courses/${courseId}/restore`, { method: 'POST' });
+  }
+  async getCourseArchive(courseId: string) {
+    return this.request<CourseArchive>(`/courses/${courseId}/archive`);
+  }
+  async setLegalHold(courseId: string, hold: boolean) {
+    return this.request<Course>(`/courses/${courseId}/legal-hold`, {
+      method: 'POST',
+      body: JSON.stringify({ hold }),
+    });
+  }
+  async assignRetentionPolicy(courseId: string, policyId: string) {
+    return this.request<Course>(`/courses/${courseId}/retention-policy`, {
+      method: 'POST',
+      body: JSON.stringify({ policy_id: policyId }),
+    });
+  }
+
+  // ── Phase 4: Retention Policies ─────────────────────────────────────────────
+  async getRetentionPolicies(cursor?: string) {
+    const q = cursor ? `?cursor=${cursor}` : '';
+    return this.request<PaginatedResponse<RetentionPolicy>>(`/retention-policies${q}`);
+  }
+  async getRetentionPolicy(id: string) {
+    return this.request<RetentionPolicy>(`/retention-policies/${id}`);
+  }
+  async createRetentionPolicy(data: Partial<RetentionPolicy>) {
+    return this.request<RetentionPolicy>('/retention-policies', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+  async updateRetentionPolicy(id: string, data: Partial<RetentionPolicy>) {
+    return this.request<RetentionPolicy>(`/retention-policies/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+  async deleteRetentionPolicy(id: string) {
+    return this.request<void>(`/retention-policies/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 4: Reports ─────────────────────────────────────────────────────────
+  async getEnrolmentReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: EnrolmentReport[] }>(`/reports/enrolments${q}`);
+  }
+  async getActivityReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: ActivityReport[] }>(`/reports/activity${q}`);
+  }
+  async getCompletionReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: CompletionReport[] }>(`/reports/completion${q}`);
+  }
+  async getForumEngagementReport(courseId?: string) {
+    const q = courseId ? `?course_id=${courseId}` : '';
+    return this.request<{ data: Record<string, unknown>[] }>(`/reports/forum-engagement${q}`);
+  }
+
+  // ── Phase 4: Exports ─────────────────────────────────────────────────────────
+  async createExport(data: {
+    export_type: 'course_archive' | 'assessment_evidence' | 'engagement_metrics';
+    course_id?: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    return this.request<ExportJob>('/exports', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getExports(cursor?: string) {
+    const q = cursor ? `?cursor=${cursor}` : '';
+    return this.request<PaginatedResponse<ExportJob>>(`/exports${q}`);
+  }
+  async getExportStatus(id: string) {
+    return this.request<ExportJob>(`/exports/${id}/status`);
+  }
+  async getExportDownload(id: string) {
+    return this.request<{ export_id: string; file_key: string; download_url: string; expires_at: string }>(
+      `/exports/${id}/download`
+    );
+  }
+
+  // ── Phase 4: Audit ───────────────────────────────────────────────────────────
+  async getAuditEvents(params?: {
+    cursor?: string;
+    limit?: number;
+    event_type?: string;
+    resource_type?: string;
+    resource_id?: string;
+    actor_id?: string;
+  }) {
+    const q = params ? '?' + new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]))
+    ).toString() : '';
+    return this.request<PaginatedResponse<AuditEvent>>(`/audit/events${q}`);
   }
 }
