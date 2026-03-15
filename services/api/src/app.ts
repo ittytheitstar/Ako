@@ -47,6 +47,12 @@ import { completionRoutes } from './routes/completion';
 import { questionBankRoutes } from './routes/question-bank';
 import { quizRoutes } from './routes/quizzes';
 import { calendarRoutes } from './routes/calendar';
+import { lessonRoutes } from './routes/lessons';
+import { choiceRoutes } from './routes/choices';
+import { glossaryRoutes } from './routes/glossary';
+import { workshopRoutes } from './routes/workshops';
+import { wikiRoutes } from './routes/wikis';
+import { attendanceRoutes } from './routes/attendance';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -144,6 +150,14 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Phase 10 routes
   await fastify.register(calendarRoutes, { prefix: '/api/v1/calendar' });
+
+  // Phase 11 routes
+  await fastify.register(lessonRoutes, { prefix: '/api/v1/lessons' });
+  await fastify.register(choiceRoutes, { prefix: '/api/v1/choices' });
+  await fastify.register(glossaryRoutes, { prefix: '/api/v1/glossary' });
+  await fastify.register(workshopRoutes, { prefix: '/api/v1/workshops' });
+  await fastify.register(wikiRoutes, { prefix: '/api/v1/wikis' });
+  await fastify.register(attendanceRoutes, { prefix: '/api/v1/attendance' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
