@@ -34,8 +34,8 @@ export default function ChoicePollPage({ params }: { params: Promise<{ id: strin
 
   const choice = choiceQuery.data;
   const options: ChoiceOption[] = choice?.options ?? [];
-  const totals = resultsQuery.data?.totals ?? {};
-  const totalVotes = Object.values(totals).reduce((a, b) => a + b, 0);
+  const resultsOptions = resultsQuery.data?.options ?? [];
+  const totalVotes = resultsQuery.data?.total_responses ?? 0;
 
   const toggleOption = (optionId: string) => {
     if (choice?.multiple_select) {
@@ -73,8 +73,9 @@ export default function ChoicePollPage({ params }: { params: Promise<{ id: strin
         <div className="space-y-2">
           {options.sort((a, b) => a.position - b.position).map((opt) => {
             const isSelected = selectedIds.includes(opt.option_id);
-            const voteCount = totals[opt.option_id] ?? 0;
-            const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+            const resultOpt = resultsOptions.find((r: { option_id: string; answer_count?: number }) => r.option_id === opt.option_id);
+            const voteCount = resultOpt?.answer_count ?? 0;
+            const pct = totalVotes > 0 ? Math.round((Number(voteCount) / totalVotes) * 100) : 0;
 
             return (
               <div key={opt.option_id}>

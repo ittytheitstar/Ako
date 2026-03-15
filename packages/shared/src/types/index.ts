@@ -1156,7 +1156,7 @@ export interface AttendanceRecord {
 export interface AttendanceSummary {
   user_id: string;
   user_name?: string;
-  total: number;
+  total_recorded: number;
   present: number;
   late: number;
   absent: number;

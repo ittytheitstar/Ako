@@ -146,12 +146,12 @@ export default function AdminWorkshopsPage() {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">Submission Weight</label>
-                    <input type="number" min={0} max={1} step={0.1} value={subWeight} onChange={(e) => setSubWeight(Number(e.target.value))}
+                    <input type="number" min={0} max={100} step={1} value={subWeight} onChange={(e) => setSubWeight(Number(e.target.value))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">Assessment Weight</label>
-                    <input type="number" min={0} max={1} step={0.1} value={assessWeight} onChange={(e) => setAssessWeight(Number(e.target.value))}
+                    <input type="number" min={0} max={100} step={1} value={assessWeight} onChange={(e) => setAssessWeight(Number(e.target.value))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
                   </div>
                 </div>

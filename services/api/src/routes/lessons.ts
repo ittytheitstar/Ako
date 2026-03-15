@@ -205,7 +205,12 @@ export async function lessonRoutes(fastify: FastifyInstance) {
     // Evaluate correctness for question pages using stable JSON comparison
     let correct: boolean | null = null;
     if (currentPage.page_type === 'question' && currentPage.question?.correct_answer !== undefined) {
-      const normalize = (v: unknown) => JSON.stringify(v, Object.keys(v as object).sort());
+      const normalize = (v: unknown) => {
+        if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+          return JSON.stringify(v, Object.keys(v as Record<string, unknown>).sort());
+        }
+        return JSON.stringify(v);
+      };
       try {
         correct = normalize(body.data.answer) === normalize(currentPage.question.correct_answer);
       } catch {

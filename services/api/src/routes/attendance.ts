@@ -4,7 +4,7 @@ import { pool } from '../db/client';
 import { BadRequest, NotFound } from '@ako/shared';
 
 const sessionCreateSchema = z.object({
-  session_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be a date in YYYY-MM-DD format'),
+  session_date: z.string().date(),
   description: z.string().optional(),
   calendar_event_id: z.string().uuid().optional(),
 });

@@ -1337,9 +1337,13 @@ export class AkoClient {
   }
 
   async getChoiceResults(moduleId: string) {
-    return this.request<{ choice: Choice; totals: Record<string, number> }>(
-      `/choices/${moduleId}/results`
-    );
+    return this.request<{
+      choice_id: string;
+      question: string;
+      anonymous: boolean;
+      total_responses: number;
+      options: Array<{ option_id: string; text: string; position: number; answer_count: number }>;
+    }>(`/choices/${moduleId}/results`);
   }
 
   // ── Phase 11: Glossary ───────────────────────────────────────────────────────

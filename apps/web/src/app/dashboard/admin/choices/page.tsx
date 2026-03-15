@@ -49,8 +49,8 @@ export default function AdminChoicesPage() {
 
   const choice = choiceQuery.data;
   const options: ChoiceOption[] = choice?.options ?? [];
-  const totals = resultsQuery.data?.totals ?? {};
-  const totalVotes = Object.values(totals).reduce((a, b) => a + b, 0);
+  const resultsOptions = resultsQuery.data?.options ?? [];
+  const totalVotes = resultsQuery.data?.total_responses ?? 0;
 
   const openConfig = () => {
     if (choice) {
@@ -177,8 +177,9 @@ export default function AdminChoicesPage() {
               ) : (
                 <div className="space-y-2">
                   {options.sort((a, b) => a.position - b.position).map((opt) => {
-                    const voteCount = totals[opt.option_id] ?? 0;
-                    const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                    const resultOpt = resultsOptions.find((r) => r.option_id === opt.option_id);
+                    const voteCount = resultOpt?.answer_count ?? 0;
+                    const pct = totalVotes > 0 ? Math.round((Number(voteCount) / totalVotes) * 100) : 0;
                     return (
                       <div key={opt.option_id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-lg">
                         <span className="flex-1 text-sm text-gray-800">{opt.text}</span>
@@ -211,8 +212,9 @@ export default function AdminChoicesPage() {
                   <div className="space-y-2">
                     <p className="text-sm text-gray-500">Total votes: <strong>{totalVotes}</strong></p>
                     {options.map((opt) => {
-                      const votes = totals[opt.option_id] ?? 0;
-                      const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                      const resultOpt = resultsOptions.find((r) => r.option_id === opt.option_id);
+                      const votes = resultOpt?.answer_count ?? 0;
+                      const pct = totalVotes > 0 ? Math.round((Number(votes) / totalVotes) * 100) : 0;
                       return (
                         <div key={opt.option_id} className="space-y-1">
                           <div className="flex justify-between text-sm">

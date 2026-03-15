@@ -146,7 +146,7 @@ export async function workshopRoutes(fastify: FastifyInstance) {
     );
     if (workshops.length === 0) throw NotFound('Workshop not found');
     const workshop = workshops[0];
-    if (workshop.phase !== 'assessment') throw BadRequest('Workshop is not in assessment phase');
+    if (!['assessment', 'grading'].includes(workshop.phase)) throw BadRequest('Workshop is not in assessment or grading phase');
 
     const { rows: assessments } = await pool.query(
       `SELECT * FROM workshop_assessments
