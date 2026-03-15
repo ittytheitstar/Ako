@@ -16,6 +16,7 @@ import type {
   Workshop, WorkshopSubmission, WorkshopAssessment,
   Wiki, WikiPage, WikiPageVersion,
   AttendanceSession, AttendanceRecord, AttendanceSummary,
+  CopyJob, CopyJobOptions, BackupJob, BackupJobOptions, RestoreJob, CourseTemplate,
 } from '@ako/shared';
 
 export interface AkoClientOptions {
@@ -1543,5 +1544,99 @@ export class AkoClient {
 
   async getAttendanceSummary(moduleId: string) {
     return this.request<{ data: AttendanceSummary[] }>(`/attendance/${moduleId}/summary`);
+  }
+
+  // ── Phase 12: Course Copy ─────────────────────────────────────────────────
+
+  async copyCourse(courseId: string, data: {
+    title: string;
+    course_code: string;
+    options?: CopyJobOptions;
+  }) {
+    return this.request<CopyJob>(`/courses/${courseId}/copy`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getCopyJobs() {
+    return this.request<{ data: CopyJob[] }>('/copy-jobs');
+  }
+
+  async getCopyJob(jobId: string) {
+    return this.request<CopyJob>(`/copy-jobs/${jobId}`);
+  }
+
+  // ── Phase 12: Course Templates ────────────────────────────────────────────
+
+  async getCourseTemplates(params?: { category?: string; tag?: string; q?: string }) {
+    return this.request<{ data: CourseTemplate[] }>(
+      `/course-templates${this.toQueryString(params)}`
+    );
+  }
+
+  async promoteTemplate(courseId: string, data?: {
+    template_category?: string;
+    template_tags?: string[];
+    template_description?: string;
+  }) {
+    return this.request<Course>(`/courses/${courseId}/promote-template`, {
+      method: 'POST', body: JSON.stringify(data ?? {}),
+    });
+  }
+
+  async demoteTemplate(courseId: string) {
+    return this.request<Course>(`/courses/${courseId}/demote-template`, { method: 'DELETE' });
+  }
+
+  async createCourseFromTemplate(templateId: string, data: {
+    title: string;
+    course_code: string;
+    options?: CopyJobOptions;
+  }) {
+    return this.request<CopyJob>(`/course-templates/${templateId}/create-course`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  // ── Phase 12: Backup ──────────────────────────────────────────────────────
+
+  async startBackup(courseId: string, options?: BackupJobOptions) {
+    return this.request<BackupJob>(`/courses/${courseId}/backup`, {
+      method: 'POST', body: JSON.stringify(options ?? {}),
+    });
+  }
+
+  async getBackupJobs() {
+    return this.request<{ data: BackupJob[] }>('/backup-jobs');
+  }
+
+  async getBackupJob(jobId: string) {
+    return this.request<BackupJob>(`/backup-jobs/${jobId}`);
+  }
+
+  async getBackupDownload(jobId: string) {
+    return this.request<{ file_path: string; file_size_bytes: number }>(
+      `/backup-jobs/${jobId}/download`
+    );
+  }
+
+  // ── Phase 12: Restore ─────────────────────────────────────────────────────
+
+  async restoreFromBackup(data?: { title?: string; course_code?: string }) {
+    return this.request<RestoreJob>('/courses/restore', {
+      method: 'POST', body: JSON.stringify(data ?? {}),
+    });
+  }
+
+  async restoreIntoCourse(courseId: string) {
+    return this.request<RestoreJob>(`/courses/${courseId}/restore`, { method: 'POST' });
+  }
+
+  async getRestoreJobs() {
+    return this.request<{ data: RestoreJob[] }>('/restore-jobs');
+  }
+
+  async getRestoreJob(jobId: string) {
+    return this.request<RestoreJob>(`/restore-jobs/${jobId}`);
   }
 }

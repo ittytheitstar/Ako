@@ -2,7 +2,7 @@ import { Pool, PoolClient } from 'pg';
 import {
   MoodleCourse, MoodleUser, ImportResult, emptyResult,
 } from './types';
-import { mapModuleType, mapRole } from './importer-helpers';
+import { mapModuleType, mapRole, mapQuestionType } from './importer-helpers';
 
 /**
  * Writes a parsed Moodle course into the Ako PostgreSQL database.
@@ -44,6 +44,14 @@ export class AkoImporter {
       result.enrolments = (course.enrolments ?? []).length;
       result.forums = (course.forums ?? []).length;
       result.assignments = (course.assignments ?? []).length;
+      result.questionCategories = (course.questionCategories ?? []).length;
+      result.questions = (course.questionCategories ?? []).reduce((s, c) => s + c.questions.length, 0);
+      result.gradeCategories = (course.gradeCategories ?? []).length;
+      result.gradeItems = (course.gradeItems ?? []).length;
+      result.lessons = (course.lessons ?? []).length;
+      result.choices = (course.choices ?? []).length;
+      result.glossaries = (course.glossaries ?? []).length;
+      result.wikis = (course.wikis ?? []).length;
       return result;
     }
 
@@ -223,6 +231,197 @@ export class AkoImporter {
         result.grades++;
       }
 
+      // ── Phase 9: Question bank categories & questions ─────────────────────
+      const qbankModuleId = await this.ensureQbankModule(client, tenantId, courseId);
+      for (const cat of (course.questionCategories ?? [])) {
+        const { rows: catRows } = await client.query(
+          `INSERT INTO question_bank_categories (tenant_id, module_id, name, description)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT DO NOTHING
+           RETURNING category_id`,
+          [tenantId, qbankModuleId, cat.name, cat.info ?? null]
+        );
+        if (catRows.length === 0) {
+          result.warnings.push(`Question category "${cat.name}" already exists or could not be created.`);
+          continue;
+        }
+        const categoryId: string = catRows[0].category_id;
+        result.questionCategories++;
+
+        for (const q of cat.questions) {
+          await client.query(
+            `INSERT INTO questions (tenant_id, category_id, question_type, name, body, max_grade)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT DO NOTHING`,
+            [
+              tenantId, categoryId,
+              mapQuestionType(q.qtype),
+              q.name,
+              JSON.stringify({ text: q.questiontext, answers: q.answers ?? [] }),
+              q.defaultmark,
+            ]
+          );
+          result.questions++;
+        }
+      }
+
+      // ── Phase 9: Gradebook structure ─────────────────────────────────────
+      const gcatIdMap = new Map<number, string>();
+      for (const gcat of (course.gradeCategories ?? [])) {
+        const { rows: gcatRows } = await client.query(
+          `INSERT INTO grade_categories (tenant_id, course_id, name, aggregation)
+           VALUES ($1, $2, $3, $4)
+           RETURNING category_id`,
+          [tenantId, courseId, gcat.fullname, 'weighted_mean']
+        );
+        gcatIdMap.set(gcat.id, gcatRows[0].category_id);
+        result.gradeCategories++;
+      }
+      for (const gi of (course.gradeItems ?? [])) {
+        const categoryId = gi.categoryId ? (gcatIdMap.get(gi.categoryId) ?? null) : null;
+        await client.query(
+          `INSERT INTO grade_items (tenant_id, course_id, category_id, source_type, name, max_grade, weight)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT DO NOTHING`,
+          [
+            tenantId, courseId, categoryId,
+            gi.itemtype === 'mod' ? gi.itemmodule ?? 'manual' : gi.itemtype,
+            gi.itemname,
+            gi.grademax,
+            gi.aggregationcoef ?? null,
+          ]
+        );
+        result.gradeItems++;
+      }
+
+      // ── Phase 11: Lessons ─────────────────────────────────────────────────
+      for (const lesson of (course.lessons ?? [])) {
+        const { rows: modRows } = await client.query(
+          `INSERT INTO course_modules (tenant_id, course_id, module_type, title, settings)
+           VALUES ($1, $2, 'page', $3, $4)
+           RETURNING module_id`,
+          [tenantId, courseId, lesson.name, JSON.stringify({ moodle_type: 'lesson' })]
+        );
+        const moduleId: string = modRows[0].module_id;
+
+        const { rows: lessonRows } = await client.query(
+          `INSERT INTO lessons (module_id, tenant_id, time_limit_minutes, max_attempts)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (module_id) DO NOTHING
+           RETURNING lesson_id`,
+          [moduleId, tenantId,
+           lesson.timelimit ? Math.ceil(lesson.timelimit / 60) : null,
+           lesson.maxattempts ?? 0]
+        );
+        if (lessonRows.length === 0) continue;
+        const lessonId: string = lessonRows[0].lesson_id;
+
+        for (let pos = 0; pos < lesson.pages.length; pos++) {
+          const page = lesson.pages[pos];
+          const pageType = page.qtype === 20 ? 'end_of_lesson' : page.qtype === 0 ? 'content' : 'question';
+          await client.query(
+            `INSERT INTO lesson_pages (lesson_id, tenant_id, page_type, title, body, position)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [lessonId, tenantId, pageType, page.title,
+             JSON.stringify({ html: page.contents }), pos]
+          );
+        }
+        result.lessons++;
+      }
+
+      // ── Phase 11: Choices ─────────────────────────────────────────────────
+      for (const choice of (course.choices ?? [])) {
+        const { rows: modRows } = await client.query(
+          `INSERT INTO course_modules (tenant_id, course_id, module_type, title, settings)
+           VALUES ($1, $2, 'page', $3, $4)
+           RETURNING module_id`,
+          [tenantId, courseId, choice.name, JSON.stringify({ moodle_type: 'choice' })]
+        );
+        const moduleId: string = modRows[0].module_id;
+
+        const showResults =
+          choice.showresults === 1 ? 'after_answer' :
+          choice.showresults === 2 ? 'after_close' : 'never';
+
+        const { rows: choiceRows } = await client.query(
+          `INSERT INTO choices (module_id, tenant_id, question, close_at, allow_update, show_results)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (module_id) DO NOTHING
+           RETURNING choice_id`,
+          [moduleId, tenantId, choice.intro ?? choice.name,
+           choice.timeclose ? new Date(choice.timeclose * 1000).toISOString() : null,
+           choice.allowupdate ?? true,
+           showResults]
+        );
+        if (choiceRows.length === 0) continue;
+        const choiceId: string = choiceRows[0].choice_id;
+
+        for (let pos = 0; pos < choice.options.length; pos++) {
+          const opt = choice.options[pos];
+          await client.query(
+            `INSERT INTO choice_options (choice_id, tenant_id, text, max_answers, position)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [choiceId, tenantId, opt.text, opt.maxanswers ?? null, pos]
+          );
+        }
+        result.choices++;
+      }
+
+      // ── Phase 11: Glossaries ──────────────────────────────────────────────
+      for (const glossary of (course.glossaries ?? [])) {
+        const { rows: modRows } = await client.query(
+          `INSERT INTO course_modules (tenant_id, course_id, module_type, title, settings)
+           VALUES ($1, $2, 'page', $3, $4)
+           RETURNING module_id`,
+          [tenantId, courseId, glossary.name, JSON.stringify({ moodle_type: 'glossary' })]
+        );
+        const moduleId: string = modRows[0].module_id;
+
+        for (const entry of glossary.entries) {
+          const authorId = userIdMap.get(entry.userid) ?? null;
+          await client.query(
+            `INSERT INTO glossary_entries
+               (module_id, tenant_id, term, definition, author_id, status)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [moduleId, tenantId, entry.concept, entry.definition,
+             authorId, entry.approved ? 'approved' : 'pending']
+          );
+        }
+        result.glossaries++;
+      }
+
+      // ── Phase 11: Wikis ───────────────────────────────────────────────────
+      for (const wiki of (course.wikis ?? [])) {
+        const { rows: modRows } = await client.query(
+          `INSERT INTO course_modules (tenant_id, course_id, module_type, title, settings)
+           VALUES ($1, $2, 'page', $3, $4)
+           RETURNING module_id`,
+          [tenantId, courseId, wiki.name, JSON.stringify({ moodle_type: 'wiki' })]
+        );
+        const moduleId: string = modRows[0].module_id;
+
+        const { rows: wikiRows } = await client.query(
+          `INSERT INTO wikis (module_id, tenant_id, wiki_type)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (module_id) DO NOTHING
+           RETURNING wiki_id`,
+          [moduleId, tenantId, wiki.wikimode]
+        );
+        if (wikiRows.length === 0) continue;
+        const wikiId: string = wikiRows[0].wiki_id;
+
+        for (const page of wiki.pages) {
+          const ownerId = userIdMap.get(page.userid) ?? null;
+          await client.query(
+            `INSERT INTO wiki_pages (wiki_id, tenant_id, owner_id, title, body, version)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [wikiId, tenantId, ownerId, page.title,
+             JSON.stringify({ html: page.cachedcontent }), page.version]
+          );
+        }
+        result.wikis++;
+      }
+
       await client.query('COMMIT');
       console.log(`  ✅  Course imported: ${course.shortname}`);
     } catch (err) {
@@ -249,6 +448,29 @@ export class AkoImporter {
        user.firstname || null, user.lastname || null]
     );
     return rows[0].user_id;
+  }
+
+  /**
+   * Ensure a course-level question bank module exists for housing imported
+   * question categories. Returns the module_id.
+   */
+  private async ensureQbankModule(
+    client: PoolClient, tenantId: string, courseId: string
+  ): Promise<string> {
+    const { rows } = await client.query(
+      `SELECT module_id FROM course_modules
+       WHERE tenant_id = $1 AND course_id = $2 AND module_type = 'quiz' AND title = '__question_bank__'
+       LIMIT 1`,
+      [tenantId, courseId]
+    );
+    if (rows.length > 0) return rows[0].module_id as string;
+    const { rows: newRows } = await client.query(
+      `INSERT INTO course_modules (tenant_id, course_id, module_type, title)
+       VALUES ($1, $2, 'quiz', '__question_bank__')
+       RETURNING module_id`,
+      [tenantId, courseId]
+    );
+    return newRows[0].module_id as string;
   }
 
   private async resolveTenantId(): Promise<string | null> {

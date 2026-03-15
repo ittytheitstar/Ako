@@ -116,17 +116,25 @@ async function parseMoodleBackup(workDir: string, _importUsers: boolean) {
 
 function printResult(result: ImportResult): void {
   console.log('\n📊 Import summary');
-  console.log(`   Courses     : ${result.courses}`);
-  console.log(`   Sections    : ${result.sections}`);
-  console.log(`   Modules     : ${result.modules}`);
-  console.log(`   Users       : ${result.users}`);
-  console.log(`   Enrolments  : ${result.enrolments}`);
-  console.log(`   Forums      : ${result.forums}`);
-  console.log(`   Threads     : ${result.threads}`);
-  console.log(`   Posts       : ${result.posts}`);
-  console.log(`   Assignments : ${result.assignments}`);
-  console.log(`   Submissions : ${result.submissions}`);
-  console.log(`   Grades      : ${result.grades}`);
+  console.log(`   Courses           : ${result.courses}`);
+  console.log(`   Sections          : ${result.sections}`);
+  console.log(`   Modules           : ${result.modules}`);
+  console.log(`   Users             : ${result.users}`);
+  console.log(`   Enrolments        : ${result.enrolments}`);
+  console.log(`   Forums            : ${result.forums}`);
+  console.log(`   Threads           : ${result.threads}`);
+  console.log(`   Posts             : ${result.posts}`);
+  console.log(`   Assignments       : ${result.assignments}`);
+  console.log(`   Submissions       : ${result.submissions}`);
+  console.log(`   Grades            : ${result.grades}`);
+  console.log(`   Question cats.    : ${result.questionCategories}`);
+  console.log(`   Questions         : ${result.questions}`);
+  console.log(`   Grade categories  : ${result.gradeCategories}`);
+  console.log(`   Grade items       : ${result.gradeItems}`);
+  console.log(`   Lessons           : ${result.lessons}`);
+  console.log(`   Choices           : ${result.choices}`);
+  console.log(`   Glossaries        : ${result.glossaries}`);
+  console.log(`   Wikis             : ${result.wikis}`);
   if (result.warnings.length > 0) {
     console.log(`\n⚠️   Warnings (${result.warnings.length}):`);
     result.warnings.forEach(w => console.log(`   - ${w}`));

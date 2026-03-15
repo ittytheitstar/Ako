@@ -53,6 +53,8 @@ import { glossaryRoutes } from './routes/glossary';
 import { workshopRoutes } from './routes/workshops';
 import { wikiRoutes } from './routes/wikis';
 import { attendanceRoutes } from './routes/attendance';
+import { courseCopyRoutes, backupJobRoutes } from './routes/backup';
+import { courseTemplateRoutes } from './routes/course-templates';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -158,6 +160,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(workshopRoutes, { prefix: '/api/v1/workshops' });
   await fastify.register(wikiRoutes, { prefix: '/api/v1/wikis' });
   await fastify.register(attendanceRoutes, { prefix: '/api/v1/attendance' });
+
+  // Phase 12 routes
+  await fastify.register(courseCopyRoutes, { prefix: '/api/v1/courses' });
+  await fastify.register(courseTemplateRoutes, { prefix: '/api/v1/course-templates' });
+  await fastify.register(backupJobRoutes, { prefix: '/api/v1' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
