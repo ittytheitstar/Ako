@@ -64,6 +64,17 @@ import {
   competencyProfileRoutes,
 } from './routes/competencies';
 import { programmeRoutes } from './routes/programmes';
+import {
+  kanbanBoardRoutes,
+  kanbanLaneRoutes,
+  kanbanLaneCrudRoutes,
+  kanbanCardRoutes,
+  kanbanCardCrudRoutes,
+  kanbanMemberRoutes,
+  kanbanMemberCrudRoutes,
+  kanbanTemplateRoutes,
+} from './routes/kanban';
+import { issueRoutes, issueCommentRoutes, userStoryRoutes } from './routes/issues';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -151,6 +162,9 @@ Obtain a token via \`POST /api/v1/auth/token\`, then click **Authorize** and pas
         { name: 'Competency Mapping', description: 'Course and activity competency mapping' },
         { name: 'Competency Evidence', description: 'Evidence collection and learner profiles' },
         { name: 'Programmes', description: 'Programme definition and attainment reports' },
+        { name: 'Kanban', description: 'Kanban boards, lanes, cards and board templates' },
+        { name: 'Issues', description: 'Issue tracker with comments' },
+        { name: 'User Stories', description: 'User story backlog' },
         { name: 'SCIM', description: 'SCIM 2.0 user provisioning' },
         { name: 'Health', description: 'Health probes' },
         { name: 'Files', description: 'File uploads' },
@@ -255,6 +269,19 @@ Obtain a token via \`POST /api/v1/auth/token\`, then click **Authorize** and pas
   await fastify.register(competencyEvidenceRoutes, { prefix: '/api/v1/competency-evidence' });
   await fastify.register(competencyProfileRoutes, { prefix: '/api/v1/users' });
   await fastify.register(programmeRoutes, { prefix: '/api/v1/programmes' });
+
+  // Phase 14 routes
+  await fastify.register(kanbanBoardRoutes,      { prefix: '/api/v1/kanban-boards' });
+  await fastify.register(kanbanLaneRoutes,       { prefix: '/api/v1/kanban-boards' });
+  await fastify.register(kanbanLaneCrudRoutes,   { prefix: '/api/v1/kanban-lanes' });
+  await fastify.register(kanbanCardRoutes,       { prefix: '/api/v1/kanban-boards' });
+  await fastify.register(kanbanCardCrudRoutes,   { prefix: '/api/v1/kanban-cards' });
+  await fastify.register(kanbanMemberRoutes,     { prefix: '/api/v1/kanban-boards' });
+  await fastify.register(kanbanMemberCrudRoutes, { prefix: '/api/v1/kanban-board-members' });
+  await fastify.register(kanbanTemplateRoutes,   { prefix: '/api/v1/board-templates' });
+  await fastify.register(issueRoutes,            { prefix: '/api/v1/issues' });
+  await fastify.register(issueCommentRoutes,     { prefix: '/api/v1/issue-comments' });
+  await fastify.register(userStoryRoutes,        { prefix: '/api/v1/user-stories' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
