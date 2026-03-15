@@ -55,6 +55,11 @@ export interface Course {
   policy_id?: string;
   retention_until?: string;
   legal_hold: boolean;
+  // Phase 12 – template fields
+  is_template?: boolean;
+  template_category?: string;
+  template_tags?: string[];
+  template_description?: string;
 }
 
 export interface CourseSection {
@@ -1162,4 +1167,84 @@ export interface AttendanceSummary {
   absent: number;
   excused: number;
   percentage: number;
+}
+
+// ─── Phase 12 – Course Templates, Backup, Restore & Course Copy ───────────────
+
+export type JobStatus = 'pending' | 'running' | 'complete' | 'failed';
+
+export interface CopyJobOptions {
+  title?: string;
+  course_code?: string;
+  include_content?: boolean;
+  include_assessments?: boolean;
+  include_gradebook?: boolean;
+  include_forums?: boolean;
+  include_completion?: boolean;
+  include_calendar?: boolean;
+  include_cohorts?: boolean;
+}
+
+export interface CopyJob {
+  job_id: string;
+  tenant_id: string;
+  source_course_id: string;
+  target_course_id?: string;
+  source_course_title?: string;
+  target_course_title?: string;
+  options: CopyJobOptions;
+  status: JobStatus;
+  error_message?: string;
+  created_by?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface BackupJobOptions {
+  include_files?: boolean;
+  include_submissions?: boolean;
+}
+
+export interface BackupJob {
+  job_id: string;
+  tenant_id: string;
+  course_id: string;
+  course_title?: string;
+  options: BackupJobOptions;
+  status: JobStatus;
+  error_message?: string;
+  file_path?: string;
+  file_size_bytes?: number;
+  created_by?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface RestoreJob {
+  job_id: string;
+  tenant_id: string;
+  target_course_id?: string;
+  target_course_title?: string;
+  source_file_path?: string;
+  manifest_version?: string;
+  options: Record<string, unknown>;
+  status: JobStatus;
+  error_message?: string;
+  warnings: string[];
+  created_by?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface CourseTemplate {
+  course_id: string;
+  tenant_id: string;
+  course_code: string;
+  title: string;
+  description?: string;
+  template_category?: string;
+  template_tags: string[];
+  template_description?: string;
+  created_at: string;
+  updated_at: string;
 }
