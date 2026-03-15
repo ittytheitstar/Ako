@@ -17,6 +17,9 @@ import type {
   Wiki, WikiPage, WikiPageVersion,
   AttendanceSession, AttendanceRecord, AttendanceSummary,
   CopyJob, CopyJobOptions, BackupJob, BackupJobOptions, RestoreJob, CourseTemplate,
+  CompetencyFramework, Competency, CourseCompetencyLink, ActivityCompetencyLink,
+  CompetencyEvidence, CompetencyProfile, Programme, ProgrammeCompetencyReport,
+  ProficiencyExpectation, ProficiencyRating,
 } from '@ako/shared';
 
 export interface AkoClientOptions {
@@ -1638,5 +1641,187 @@ export class AkoClient {
 
   async getRestoreJob(jobId: string) {
     return this.request<RestoreJob>(`/restore-jobs/${jobId}`);
+  }
+
+  // ── Phase 13: Competency Frameworks ──────────────────────────────────────
+
+  async getCompetencyFrameworks() {
+    return this.request<{ data: CompetencyFramework[] }>('/competency-frameworks');
+  }
+
+  async createCompetencyFramework(data: {
+    name: string;
+    version?: string;
+    source?: 'manual' | 'csv' | 'case';
+    description?: string;
+  }) {
+    return this.request<CompetencyFramework>('/competency-frameworks', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getCompetencyFramework(id: string) {
+    return this.request<CompetencyFramework & { competencies: Competency[] }>(
+      `/competency-frameworks/${id}`
+    );
+  }
+
+  async updateCompetencyFramework(id: string, data: Partial<Pick<CompetencyFramework, 'name' | 'version' | 'description'>>) {
+    return this.request<CompetencyFramework>(`/competency-frameworks/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompetencyFramework(id: string) {
+    return this.request<void>(`/competency-frameworks/${id}`, { method: 'DELETE' });
+  }
+
+  async importCompetencies(frameworkId: string, rows: Array<{
+    short_name: string;
+    description?: string;
+    idnumber?: string;
+    parent_idnumber?: string;
+  }>) {
+    return this.request<{ imported: number; competencies: Competency[] }>(
+      `/competency-frameworks/${frameworkId}/import`,
+      { method: 'POST', body: JSON.stringify({ rows }) }
+    );
+  }
+
+  async exportFrameworkCsv(frameworkId: string) {
+    return this.request<string>(`/competency-frameworks/${frameworkId}/export`);
+  }
+
+  // ── Phase 13: Competencies ───────────────────────────────────────────────
+
+  async getCompetencies(frameworkId: string, tree = false) {
+    return this.request<{ data: Competency[] }>(
+      `/competency-frameworks/${frameworkId}/competencies${tree ? '?tree=1' : ''}`
+    );
+  }
+
+  async createCompetency(frameworkId: string, data: {
+    parent_id?: string;
+    short_name: string;
+    description?: string;
+    idnumber?: string;
+  }) {
+    return this.request<Competency>(`/competency-frameworks/${frameworkId}/competencies`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async updateCompetency(id: string, data: Partial<Pick<Competency, 'short_name' | 'description' | 'idnumber'>>) {
+    return this.request<Competency>(`/competencies/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompetency(id: string) {
+    return this.request<void>(`/competencies/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 13: Course & Module Mapping ────────────────────────────────────
+
+  async getCourseCompetencies(courseId: string) {
+    return this.request<{ data: CourseCompetencyLink[] }>(`/courses/${courseId}/competencies`);
+  }
+
+  async setCourseCompetencies(courseId: string, links: Array<{
+    competency_id: string;
+    proficiency_expectation?: ProficiencyExpectation;
+  }>) {
+    return this.request<{ data: CourseCompetencyLink[] }>(`/courses/${courseId}/competencies`, {
+      method: 'PUT', body: JSON.stringify({ links }),
+    });
+  }
+
+  async getModuleCompetencies(moduleId: string) {
+    return this.request<{ data: ActivityCompetencyLink[] }>(`/modules/${moduleId}/competencies`);
+  }
+
+  async setModuleCompetencies(moduleId: string, competencyIds: string[]) {
+    return this.request<{ data: ActivityCompetencyLink[] }>(`/modules/${moduleId}/competencies`, {
+      method: 'PUT', body: JSON.stringify({ competency_ids: competencyIds }),
+    });
+  }
+
+  // ── Phase 13: Evidence ───────────────────────────────────────────────────
+
+  async getCompetencyEvidence(params?: {
+    user_id?: string;
+    competency_id?: string;
+    course_id?: string;
+  }) {
+    return this.request<{ data: CompetencyEvidence[] }>(
+      `/competency-evidence${this.toQueryString(params)}`
+    );
+  }
+
+  async recordCompetencyEvidence(data: {
+    competency_id: string;
+    user_id: string;
+    course_id?: string;
+    source_type?: string;
+    proficiency_rating: ProficiencyRating;
+    rating_source?: string;
+    evidence_date?: string;
+    notes?: string;
+  }) {
+    return this.request<CompetencyEvidence>('/competency-evidence', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getCompetencyProfile(userId: string) {
+    return this.request<{ data: CompetencyProfile[] }>(`/users/${userId}/competency-profile`);
+  }
+
+  async getCompetencyTranscript(userId: string, format?: 'csv') {
+    return this.request<{ data: CompetencyEvidence[] }>(
+      `/users/${userId}/competency-transcript${format ? `?format=${format}` : ''}`
+    );
+  }
+
+  // ── Phase 13: Programmes ─────────────────────────────────────────────────
+
+  async getProgrammes() {
+    return this.request<{ data: Programme[] }>('/programmes');
+  }
+
+  async createProgramme(data: {
+    name: string;
+    code: string;
+    description?: string;
+    framework_id?: string;
+    course_ids?: string[];
+    settings?: Record<string, unknown>;
+  }) {
+    return this.request<Programme>('/programmes', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getProgramme(id: string) {
+    return this.request<Programme & { courses: Course[] }>(`/programmes/${id}`);
+  }
+
+  async updateProgramme(id: string, data: Partial<Pick<Programme, 'name' | 'code' | 'description' | 'framework_id' | 'course_ids' | 'settings'>>) {
+    return this.request<Programme>(`/programmes/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async getProgrammeReport(id: string) {
+    return this.request<{ programme: Programme; data: ProgrammeCompetencyReport[] }>(
+      `/programmes/${id}/report`
+    );
+  }
+
+  async refreshProgrammeReport(id: string) {
+    return this.request<{ refreshed: number; total_learners: number }>(
+      `/programmes/${id}/report/refresh`,
+      { method: 'POST' }
+    );
   }
 }

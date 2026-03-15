@@ -24,7 +24,7 @@ A modern, API-first, multi-tenant Learning Management System built with TypeScri
 
 ## Feature Overview
 
-Ako LMS is implemented across 12 phases. All phases are complete.
+Ako LMS is implemented across 13 phases. All phases are complete.
 
 | Phase | Domain | Key Deliverables |
 |-------|--------|-----------------|
@@ -40,6 +40,15 @@ Ako LMS is implemented across 12 phases. All phases are complete.
 | 10 | Calendar | Institutional calendar, external iCal sync, reminder preferences |
 | 11 | Rich Activities | Lessons, choices, glossaries, workshops, wikis, attendance |
 | 12 | Templates & Backup | Course copy wizard, template library, backup/restore, enhanced Moodle import |
+| 13 | Competencies & Outcomes | Competency frameworks, learning outcome mapping, evidence collection, programme reports |
+
+### Phase 13 highlights
+
+- **Competency Frameworks** – Define hierarchical competency trees (manual, CSV import, or CASE JSON). Admin framework manager with full CRUD and import/export.
+- **Course & Activity Mapping** – Map courses to competency sets with proficiency expectations; tag individual modules to competencies.
+- **Evidence Collection** – Automatic evidence from quiz passes and assignment grades; teacher judgments; portfolio uploads. Evidence aggregation using `latest`, `highest`, `average`, or `manual` strategies.
+- **Learner Competency Dashboard** – Colour-coded proficiency tree with evidence drill-down and CSV transcript export.
+- **Programmes** – Group courses into programmes, link to a competency framework, and generate cohort-level attainment reports showing % of learners reaching each proficiency level.
 
 ### Phase 12 highlights
 
@@ -209,6 +218,7 @@ All SQL migrations live in `db/` and are applied in filename order when the Post
 | `010_phase10.sql` | Calendar events, external sources, iCal tokens |
 | `011_phase11.sql` | Lessons, choices, glossaries, workshops, wikis, attendance |
 | `012_phase12.sql` | Copy jobs, backup jobs, restore jobs, course template columns |
+| `013_phase13.sql` | Competency frameworks, competencies, links, evidence, profiles, programmes, reports |
 
 ### Reset the database
 
@@ -221,7 +231,7 @@ docker compose up -d
 ### Apply migrations to an existing database manually
 
 ```bash
-psql $DATABASE_URL -f db/012_phase12.sql
+psql $DATABASE_URL -f db/013_phase13.sql
 ```
 
 ---
@@ -258,6 +268,7 @@ Ako/
 ├── apps/
 │   └── web/                     # Next.js 15 frontend (App Router)
 │       └── src/app/dashboard/
+│           ├── competencies/     # Learner competency dashboard
 │           ├── courses/          # Course browser, builder, copy wizard
 │           ├── templates/        # Learner template browser
 │           ├── assignments/      # Assignment submission
@@ -275,6 +286,8 @@ Ako/
 │           └── admin/            # Admin-only pages
 │               ├── templates/    # Template library manager
 │               ├── backup/       # Backup & restore management
+│               ├── frameworks/   # Competency framework manager
+│               ├── programmes/   # Programme builder & attainment reports
 │               ├── completion/   # Course completion management
 │               ├── gradebook/    # Institution gradebook
 │               ├── calendar/     # Institutional calendar
@@ -290,7 +303,7 @@ Ako/
 ├── tools/
 │   ├── migrate-moodle/          # Moodle backup/DB import CLI
 │   └── convert-plugins/         # Moodle plugin → Ako plugin converter
-├── db/                          # SQL migration files (001–012)
+├── db/                          # SQL migration files (001–013)
 ├── infra/
 │   ├── helm/                    # Helm chart for Kubernetes
 │   └── k8s/                     # Raw Kubernetes manifests
@@ -301,9 +314,16 @@ Ako/
 
 ## API Reference
 
-### Interactive docs
+### Interactive docs (Swagger UI)
 
 Swagger UI is available at **<http://localhost:8080/api/v1/docs>** once the API is running.
+
+The UI includes:
+- **All 13 phases** of API endpoints organised by tag
+- **Try it out** — execute requests directly from the browser
+- **Authorize** button — paste your JWT once to authenticate all requests
+- **Request duration** display and deep-linking support
+- Tag-based filtering to quickly find endpoints
 
 OpenAPI JSON: `GET http://localhost:8080/api/v1/openapi.json`
 
@@ -330,6 +350,45 @@ Refresh a token:
 curl -X POST http://localhost:8080/api/v1/auth/refresh \
   -H 'Content-Type: application/json' \
   -d '{ "refreshToken": "..." }'
+```
+
+### Key API surface (Phase 13 additions)
+
+```
+# Competency Frameworks
+GET    /api/v1/competency-frameworks                        List frameworks
+POST   /api/v1/competency-frameworks                        Create framework
+GET    /api/v1/competency-frameworks/:id                    Get with competency tree
+PATCH  /api/v1/competency-frameworks/:id                    Update metadata
+DELETE /api/v1/competency-frameworks/:id                    Delete (no evidence)
+POST   /api/v1/competency-frameworks/:id/import             Import CSV rows
+GET    /api/v1/competency-frameworks/:id/export             Export as CSV
+
+# Competencies
+GET    /api/v1/competency-frameworks/:fid/competencies      List (flat or ?tree=1)
+POST   /api/v1/competency-frameworks/:fid/competencies      Create
+PATCH  /api/v1/competencies/:id                             Update
+DELETE /api/v1/competencies/:id                             Delete leaf node
+
+# Course & Activity Mapping
+GET    /api/v1/courses/:id/competencies                     List mapped competencies
+PUT    /api/v1/courses/:id/competencies                     Replace mapping
+GET    /api/v1/modules/:id/competencies                     List module tags
+PUT    /api/v1/modules/:id/competencies                     Replace module tags
+
+# Evidence
+GET    /api/v1/competency-evidence                          List evidence
+POST   /api/v1/competency-evidence                          Record teacher judgment
+GET    /api/v1/users/:id/competency-profile                 Aggregated learner profile
+GET    /api/v1/users/:id/competency-transcript              Full transcript (?format=csv)
+
+# Programmes
+GET    /api/v1/programmes                                   List programmes
+POST   /api/v1/programmes                                   Create programme
+GET    /api/v1/programmes/:id                               Get with course list
+PATCH  /api/v1/programmes/:id                               Update
+GET    /api/v1/programmes/:id/report                        Attainment report
+POST   /api/v1/programmes/:id/report/refresh                Refresh cached report
 ```
 
 ### Key API surface (Phase 12 additions)

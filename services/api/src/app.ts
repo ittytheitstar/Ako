@@ -55,6 +55,15 @@ import { wikiRoutes } from './routes/wikis';
 import { attendanceRoutes } from './routes/attendance';
 import { courseCopyRoutes, backupJobRoutes } from './routes/backup';
 import { courseTemplateRoutes } from './routes/course-templates';
+import {
+  competencyFrameworkRoutes,
+  competencyRoutes,
+  competencyCrudRoutes,
+  competencyMappingRoutes,
+  competencyEvidenceRoutes,
+  competencyProfileRoutes,
+} from './routes/competencies';
+import { programmeRoutes } from './routes/programmes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -81,15 +90,79 @@ export async function buildApp(): Promise<FastifyInstance> {
     openapi: {
       info: {
         title: 'Ako LMS API',
-        description: 'Ako Learning Management System REST API',
+        description: `Ako Learning Management System REST API — multi-tenant, API-first LMS built with Fastify and TypeScript.
+
+**Authentication**: All endpoints (except \`/auth/*\` and \`/health\`) require a Bearer JWT.
+
+Obtain a token via \`POST /api/v1/auth/token\`, then click **Authorize** and paste your token.`,
         version: '1.0.0',
+        contact: { name: 'Ako LMS', url: 'https://github.com/ittytheitstar/Ako' },
+        license: { name: 'MIT' },
       },
+      servers: [
+        { url: 'http://localhost:8080', description: 'Local development' },
+      ],
+      tags: [
+        { name: 'Auth', description: 'Authentication and token management' },
+        { name: 'Users', description: 'User management' },
+        { name: 'Tenants', description: 'Tenant management' },
+        { name: 'Roles', description: 'Role and permission management' },
+        { name: 'Courses', description: 'Course CRUD, sections, modules' },
+        { name: 'Cohorts', description: 'Cohort management' },
+        { name: 'Enrolments', description: 'Course enrolments' },
+        { name: 'Forums', description: 'Discussion forums and threads' },
+        { name: 'Assignments', description: 'Assignment submissions and grading' },
+        { name: 'Gradebook', description: 'Grade items, categories and grades' },
+        { name: 'Messages', description: 'Direct messaging' },
+        { name: 'Notifications', description: 'Notifications and announcements' },
+        { name: 'Announcements', description: 'Course and system announcements' },
+        { name: 'Presence', description: 'Online presence heartbeat' },
+        { name: 'Terms', description: 'Academic terms' },
+        { name: 'Archive', description: 'Course archiving' },
+        { name: 'Retention', description: 'Retention policies' },
+        { name: 'Reports', description: 'Enrolment and activity reports' },
+        { name: 'Exports', description: 'Data exports' },
+        { name: 'Audit', description: 'Audit log' },
+        { name: 'Plugins', description: 'Plugin registry' },
+        { name: 'Webhooks', description: 'Webhook management' },
+        { name: 'Integrations', description: 'External integrations' },
+        { name: 'Automation', description: 'Automation rules' },
+        { name: 'Feature Flags', description: 'Feature flag management' },
+        { name: 'Developer', description: 'Developer API keys' },
+        { name: 'Metrics', description: 'System metrics and observability' },
+        { name: 'Rate Limits', description: 'Rate limit management' },
+        { name: 'Permission Audit', description: 'Permission audit log' },
+        { name: 'System Alerts', description: 'System alert management' },
+        { name: 'Completion', description: 'Module and course completion tracking' },
+        { name: 'Question Bank', description: 'Question bank categories and questions' },
+        { name: 'Quizzes', description: 'Quiz management and attempts' },
+        { name: 'Calendar', description: 'Calendar events and iCal sync' },
+        { name: 'Lessons', description: 'Lesson activities' },
+        { name: 'Choices', description: 'Choice/poll activities' },
+        { name: 'Glossary', description: 'Glossary entries' },
+        { name: 'Workshops', description: 'Workshop peer-review activities' },
+        { name: 'Wikis', description: 'Wiki pages' },
+        { name: 'Attendance', description: 'Attendance sessions and records' },
+        { name: 'Course Copy', description: 'Async course copy jobs' },
+        { name: 'Course Templates', description: 'Template library management' },
+        { name: 'Backup', description: 'Backup and restore jobs' },
+        { name: 'Competency Frameworks', description: 'Competency framework CRUD and import/export' },
+        { name: 'Competencies', description: 'Competency node management' },
+        { name: 'Competency Mapping', description: 'Course and activity competency mapping' },
+        { name: 'Competency Evidence', description: 'Evidence collection and learner profiles' },
+        { name: 'Programmes', description: 'Programme definition and attainment reports' },
+        { name: 'SCIM', description: 'SCIM 2.0 user provisioning' },
+        { name: 'Health', description: 'Health probes' },
+        { name: 'Files', description: 'File uploads' },
+        { name: 'LTI', description: 'LTI tool integrations' },
+      ],
       components: {
         securitySchemes: {
           bearerAuth: {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
+            description: 'Obtain a JWT from POST /api/v1/auth/token and paste it here.',
           },
         },
       },
@@ -98,6 +171,14 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await fastify.register(swaggerUi, {
     routePrefix: '/api/v1/docs',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: true,
+      displayRequestDuration: true,
+      filter: true,
+      tryItOutEnabled: true,
+    },
+    staticCSP: true,
   });
 
   await fastify.register(redisPlugin);
@@ -165,6 +246,15 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(courseCopyRoutes, { prefix: '/api/v1/courses' });
   await fastify.register(courseTemplateRoutes, { prefix: '/api/v1/course-templates' });
   await fastify.register(backupJobRoutes, { prefix: '/api/v1' });
+
+  // Phase 13 routes
+  await fastify.register(competencyFrameworkRoutes, { prefix: '/api/v1/competency-frameworks' });
+  await fastify.register(competencyRoutes, { prefix: '/api/v1/competency-frameworks' });
+  await fastify.register(competencyCrudRoutes, { prefix: '/api/v1/competencies' });
+  await fastify.register(competencyMappingRoutes, { prefix: '/api/v1' });
+  await fastify.register(competencyEvidenceRoutes, { prefix: '/api/v1/competency-evidence' });
+  await fastify.register(competencyProfileRoutes, { prefix: '/api/v1/users' });
+  await fastify.register(programmeRoutes, { prefix: '/api/v1/programmes' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {
