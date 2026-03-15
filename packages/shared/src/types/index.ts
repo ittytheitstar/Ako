@@ -857,3 +857,77 @@ export interface MarkingWorkflowStateRecord {
   updated_at: string;
   created_at: string;
 }
+
+// ── Phase 10 Types ────────────────────────────────────────────────────────────
+
+export type CalendarContextType = 'course' | 'cohort' | 'system';
+export type CalendarSourceType = 'assignment' | 'quiz' | 'announcement' | 'term' | 'manual';
+export type CalendarVisibility = 'public' | 'grouping' | 'private';
+
+export interface CalendarEvent {
+  event_id: string;
+  tenant_id: string;
+  title: string;
+  description?: string;
+  start_at: string;
+  end_at?: string;
+  all_day: boolean;
+  recurrence_rule?: string;
+  recurrence_exceptions: string[];
+  context_type: CalendarContextType;
+  context_id?: string;
+  source_type: CalendarSourceType;
+  source_id?: string;
+  visibility: CalendarVisibility;
+  grouping_id?: string;
+  created_by?: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarReminderPref {
+  pref_id: string;
+  tenant_id: string;
+  user_id: string;
+  event_type: string;
+  enabled: boolean;
+  intervals: number[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExternalCalendarSource {
+  source_id: string;
+  tenant_id: string;
+  name: string;
+  url: string;
+  sync_interval_minutes: number;
+  last_synced_at?: string;
+  active: boolean;
+  created_by?: string;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExternalCalendarEvent {
+  ext_event_id: string;
+  tenant_id: string;
+  source_id: string;
+  source_name?: string;
+  uid: string;
+  title: string;
+  description?: string;
+  start_at: string;
+  end_at?: string;
+  all_day: boolean;
+  raw_data: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IcalTokenResponse {
+  token: string;
+  url: string;
+}

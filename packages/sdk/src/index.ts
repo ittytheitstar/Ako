@@ -1120,4 +1120,117 @@ export class AkoClient {
       method: 'PATCH', body: JSON.stringify(data),
     });
   }
+
+  // ── Phase 10: Calendar ────────────────────────────────────────────────────
+
+  async getCalendarEvents(params?: {
+    from?: string; to?: string; context_type?: string; context_id?: string;
+    source_type?: string; limit?: number; offset?: number;
+  }) {
+    return this.request<{ data: import('@ako/shared').CalendarEvent[]; total: number }>(
+      `/calendar/events${this.toQueryString(params)}`
+    );
+  }
+
+  async createCalendarEvent(data: {
+    title: string;
+    description?: string;
+    start_at: string;
+    end_at?: string;
+    all_day?: boolean;
+    recurrence_rule?: string;
+    recurrence_exceptions?: string[];
+    context_type?: import('@ako/shared').CalendarContextType;
+    context_id?: string;
+    visibility?: import('@ako/shared').CalendarVisibility;
+    grouping_id?: string;
+  }) {
+    return this.request<import('@ako/shared').CalendarEvent>('/calendar/events', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getCalendarEvent(id: string) {
+    return this.request<import('@ako/shared').CalendarEvent>(`/calendar/events/${id}`);
+  }
+
+  async updateCalendarEvent(id: string, data: {
+    title?: string;
+    description?: string;
+    start_at?: string;
+    end_at?: string;
+    all_day?: boolean;
+    recurrence_rule?: string;
+    recurrence_exceptions?: string[];
+    context_type?: import('@ako/shared').CalendarContextType;
+    context_id?: string;
+    visibility?: import('@ako/shared').CalendarVisibility;
+    grouping_id?: string;
+    recurrence_scope?: 'single' | 'following' | 'all';
+    occurrence_date?: string;
+  }) {
+    return this.request<import('@ako/shared').CalendarEvent>(`/calendar/events/${id}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCalendarEvent(id: string, params?: { scope?: 'single' | 'following' | 'all'; occurrence_date?: string }) {
+    return this.request<void>(`/calendar/events/${id}${this.toQueryString(params)}`, { method: 'DELETE' });
+  }
+
+  async getCourseCalendar(courseId: string, params?: { from?: string; to?: string }) {
+    return this.request<{ data: import('@ako/shared').CalendarEvent[] }>(
+      `/calendar/courses/${courseId}/calendar${this.toQueryString(params)}`
+    );
+  }
+
+  async getCohortCalendar(cohortId: string, params?: { from?: string; to?: string }) {
+    return this.request<{ data: import('@ako/shared').CalendarEvent[] }>(
+      `/calendar/cohorts/${cohortId}/calendar${this.toQueryString(params)}`
+    );
+  }
+
+  async getIcalToken() {
+    return this.request<import('@ako/shared').IcalTokenResponse>('/calendar/ical/token');
+  }
+
+  async getExternalCalendarSources() {
+    return this.request<{ data: import('@ako/shared').ExternalCalendarSource[] }>('/calendar/external-sources');
+  }
+
+  async createExternalCalendarSource(data: {
+    name: string; url: string; sync_interval_minutes?: number; active?: boolean;
+  }) {
+    return this.request<import('@ako/shared').ExternalCalendarSource>('/calendar/external-sources', {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteExternalCalendarSource(id: string) {
+    return this.request<void>(`/calendar/external-sources/${id}`, { method: 'DELETE' });
+  }
+
+  async syncExternalCalendarSource(id: string) {
+    return this.request<{ message: string; source: import('@ako/shared').ExternalCalendarSource }>(
+      `/calendar/external-sources/${id}/sync`, { method: 'POST' }
+    );
+  }
+
+  async getExternalCalendarEvents(params?: { from?: string; to?: string; source_id?: string }) {
+    return this.request<{ data: import('@ako/shared').ExternalCalendarEvent[] }>(
+      `/calendar/external-events${this.toQueryString(params)}`
+    );
+  }
+
+  async getCalendarReminderPrefs() {
+    return this.request<{ data: import('@ako/shared').CalendarReminderPref[] }>('/calendar/reminder-prefs');
+  }
+
+  async updateCalendarReminderPrefs(prefs: Array<{
+    event_type: string; enabled: boolean; intervals?: number[];
+  }>) {
+    return this.request<{ data: import('@ako/shared').CalendarReminderPref[] }>('/calendar/reminder-prefs', {
+      method: 'PUT', body: JSON.stringify({ prefs }),
+    });
+  }
 }

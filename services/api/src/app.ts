@@ -46,6 +46,7 @@ import { systemAlertRoutes } from './routes/system-alerts';
 import { completionRoutes } from './routes/completion';
 import { questionBankRoutes } from './routes/question-bank';
 import { quizRoutes } from './routes/quizzes';
+import { calendarRoutes } from './routes/calendar';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -140,6 +141,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Phase 9 routes
   await fastify.register(questionBankRoutes, { prefix: '/api/v1/question-bank' });
   await fastify.register(quizRoutes, { prefix: '/api/v1/quizzes' });
+
+  // Phase 10 routes
+  await fastify.register(calendarRoutes, { prefix: '/api/v1/calendar' });
 
   fastify.setErrorHandler((error: unknown, _request, reply) => {
     if (error instanceof ProblemError) {

@@ -44,6 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Cohorts', href: '/dashboard/cohorts', icon: '👥' },
     { label: 'Enrolments', href: '/dashboard/enrolments', icon: '🎓' },
     { label: 'Past Courses', href: '/dashboard/courses/archived', icon: '📦' },
+    { label: 'Calendar', href: '/dashboard/calendar', icon: '📅' },
     { label: 'Forums', href: '/dashboard/forums', icon: '💬' },
     { label: 'Assignments', href: '/dashboard/assignments', icon: '📝' },
     { label: 'Grades', href: '/dashboard/grades', icon: '📊' },
@@ -59,6 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Feature Flags', href: '/dashboard/admin/feature-flags', icon: '🚩' },
     { label: 'Grade Scales', href: '/dashboard/admin/grade-scales', icon: '⚖️' },
     { label: 'Gradebook Admin', href: '/dashboard/admin/gradebook', icon: '🗂' },
+    { label: 'Inst. Calendar', href: '/dashboard/admin/calendar', icon: '🗓' },
     { label: 'Developer', href: '/dashboard/developer', icon: '💻' },
   ];
 
