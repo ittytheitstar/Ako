@@ -931,3 +931,235 @@ export interface IcalTokenResponse {
   token: string;
   url: string;
 }
+
+// ── Phase 11 Types ────────────────────────────────────────────────────────────
+
+export type LessonPageType = 'content' | 'question' | 'end_of_lesson' | 'branch_table';
+
+export interface Lesson {
+  lesson_id: string;
+  module_id: string;
+  tenant_id: string;
+  time_limit_minutes?: number;
+  max_attempts: number;
+  passing_grade: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LessonPage {
+  page_id: string;
+  lesson_id: string;
+  tenant_id: string;
+  page_type: LessonPageType;
+  title: string;
+  body: Record<string, unknown>;
+  question: Record<string, unknown>;
+  jump_target: string;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LessonAttempt {
+  attempt_id: string;
+  lesson_id: string;
+  tenant_id: string;
+  user_id: string;
+  current_page_id?: string;
+  score?: number;
+  started_at: string;
+  completed_at?: string;
+}
+
+export interface LessonAttemptAnswer {
+  answer_id: string;
+  attempt_id: string;
+  page_id: string;
+  answer: Record<string, unknown>;
+  correct?: boolean;
+  created_at: string;
+}
+
+export type ChoiceShowResults = 'after_answer' | 'after_close' | 'never';
+
+export interface Choice {
+  choice_id: string;
+  module_id: string;
+  tenant_id: string;
+  question: string;
+  close_at?: string;
+  allow_update: boolean;
+  show_results: ChoiceShowResults;
+  multiple_select: boolean;
+  anonymous: boolean;
+  created_at: string;
+  updated_at: string;
+  options?: ChoiceOption[];
+}
+
+export interface ChoiceOption {
+  option_id: string;
+  choice_id: string;
+  tenant_id: string;
+  text: string;
+  max_answers?: number;
+  position: number;
+  created_at: string;
+  answer_count?: number;
+}
+
+export interface ChoiceAnswer {
+  answer_id: string;
+  choice_id: string;
+  tenant_id: string;
+  user_id: string;
+  option_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type GlossaryEntryStatus = 'pending' | 'approved' | 'rejected';
+
+export interface GlossaryCategory {
+  category_id: string;
+  module_id: string;
+  tenant_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface GlossaryEntry {
+  entry_id: string;
+  module_id: string;
+  tenant_id: string;
+  term: string;
+  definition: string;
+  author_id?: string;
+  author_name?: string;
+  category_id?: string;
+  category_name?: string;
+  status: GlossaryEntryStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export type WorkshopPhase = 'setup' | 'submission' | 'assessment' | 'grading' | 'closed';
+export type WorkshopAllocationStrategy = 'random' | 'manual';
+
+export interface Workshop {
+  workshop_id: string;
+  module_id: string;
+  tenant_id: string;
+  phase: WorkshopPhase;
+  submission_end_at?: string;
+  assessment_end_at?: string;
+  peer_count: number;
+  submission_weight: number;
+  assessment_weight: number;
+  self_assessment: boolean;
+  allocation_strategy: WorkshopAllocationStrategy;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkshopSubmission {
+  submission_id: string;
+  workshop_id: string;
+  tenant_id: string;
+  author_id: string;
+  author_name?: string;
+  title: string;
+  body: Record<string, unknown>;
+  grade?: number;
+  submitted_at: string;
+  updated_at: string;
+}
+
+export interface WorkshopAssessment {
+  assessment_id: string;
+  workshop_id: string;
+  submission_id: string;
+  tenant_id: string;
+  assessor_id: string;
+  assessor_name?: string;
+  grades: Record<string, unknown>;
+  feedback?: string;
+  grade?: number;
+  submitted_at?: string;
+  created_at: string;
+}
+
+export type WikiType = 'individual' | 'collaborative';
+
+export interface Wiki {
+  wiki_id: string;
+  module_id: string;
+  tenant_id: string;
+  wiki_type: WikiType;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WikiPage {
+  page_id: string;
+  wiki_id: string;
+  tenant_id: string;
+  owner_id?: string;
+  owner_name?: string;
+  title: string;
+  body: Record<string, unknown>;
+  version: number;
+  locked: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WikiPageVersion {
+  version_id: string;
+  page_id: string;
+  tenant_id: string;
+  version: number;
+  body: Record<string, unknown>;
+  edited_by?: string;
+  editor_name?: string;
+  created_at: string;
+}
+
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'excused';
+
+export interface AttendanceSession {
+  session_id: string;
+  module_id: string;
+  tenant_id: string;
+  calendar_event_id?: string;
+  session_date: string;
+  description?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AttendanceRecord {
+  record_id: string;
+  session_id: string;
+  tenant_id: string;
+  user_id: string;
+  user_name?: string;
+  status: AttendanceStatus;
+  recorded_by?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AttendanceSummary {
+  user_id: string;
+  user_name?: string;
+  total: number;
+  present: number;
+  late: number;
+  absent: number;
+  excused: number;
+  percentage: number;
+}

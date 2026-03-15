@@ -10,6 +10,12 @@ import type {
   IntegrationConnector, AutomationRule, AutomationLog,
   FeatureFlag, DeveloperApiKey,
   PaginatedResponse,
+  Lesson, LessonPage, LessonAttempt,
+  Choice, ChoiceAnswer,
+  GlossaryCategory, GlossaryEntry,
+  Workshop, WorkshopSubmission, WorkshopAssessment,
+  Wiki, WikiPage, WikiPageVersion,
+  AttendanceSession, AttendanceRecord, AttendanceSummary,
 } from '@ako/shared';
 
 export interface AkoClientOptions {
@@ -1232,5 +1238,306 @@ export class AkoClient {
     return this.request<{ data: import('@ako/shared').CalendarReminderPref[] }>('/calendar/reminder-prefs', {
       method: 'PUT', body: JSON.stringify({ prefs }),
     });
+  }
+
+  // ── Phase 11: Lessons ────────────────────────────────────────────────────────
+
+  async getLesson(moduleId: string) {
+    return this.request<Lesson>(`/lessons/${moduleId}`);
+  }
+
+  async upsertLesson(moduleId: string, data: {
+    time_limit_minutes?: number;
+    max_attempts?: number;
+    passing_grade?: number;
+  }) {
+    return this.request<Lesson>(`/lessons/${moduleId}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+  }
+
+  async getLessonPages(moduleId: string) {
+    return this.request<{ data: LessonPage[] }>(`/lessons/${moduleId}/pages`);
+  }
+
+  async createLessonPage(moduleId: string, data: {
+    page_type: import('@ako/shared').LessonPageType;
+    title: string;
+    body?: Record<string, unknown>;
+    question?: Record<string, unknown>;
+    jump_target?: string;
+    position?: number;
+  }) {
+    return this.request<LessonPage>(`/lessons/${moduleId}/pages`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async updateLessonPage(moduleId: string, pageId: string, data: {
+    page_type?: import('@ako/shared').LessonPageType;
+    title?: string;
+    body?: Record<string, unknown>;
+    question?: Record<string, unknown>;
+    jump_target?: string;
+    position?: number;
+  }) {
+    return this.request<LessonPage>(`/lessons/${moduleId}/pages/${pageId}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteLessonPage(moduleId: string, pageId: string) {
+    return this.request<void>(`/lessons/${moduleId}/pages/${pageId}`, { method: 'DELETE' });
+  }
+
+  async startLessonAttempt(moduleId: string) {
+    return this.request<{ attempt: LessonAttempt; page: LessonPage | null }>(
+      `/lessons/${moduleId}/attempts`, { method: 'POST' }
+    );
+  }
+
+  async answerLessonPage(moduleId: string, attemptId: string, data: { answer: Record<string, unknown> }) {
+    return this.request<{ next_page: LessonPage | null; correct?: boolean }>(
+      `/lessons/${moduleId}/attempts/${attemptId}/answer`, {
+        method: 'POST', body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async finishLessonAttempt(moduleId: string, attemptId: string) {
+    return this.request<LessonAttempt>(`/lessons/${moduleId}/attempts/${attemptId}/finish`, {
+      method: 'POST',
+    });
+  }
+
+  // ── Phase 11: Choices ────────────────────────────────────────────────────────
+
+  async getChoice(moduleId: string) {
+    return this.request<Choice>(`/choices/${moduleId}`);
+  }
+
+  async upsertChoice(moduleId: string, data: {
+    question: string;
+    close_at?: string;
+    allow_update?: boolean;
+    show_results?: import('@ako/shared').ChoiceShowResults;
+    multiple_select?: boolean;
+    anonymous?: boolean;
+    options: Array<{ text: string; max_answers?: number }>;
+  }) {
+    return this.request<Choice>(`/choices/${moduleId}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+  }
+
+  async submitChoiceAnswer(moduleId: string, data: { option_ids: string[] }) {
+    return this.request<ChoiceAnswer>(`/choices/${moduleId}/answers`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getChoiceResults(moduleId: string) {
+    return this.request<{ choice: Choice; totals: Record<string, number> }>(
+      `/choices/${moduleId}/results`
+    );
+  }
+
+  // ── Phase 11: Glossary ───────────────────────────────────────────────────────
+
+  async getGlossaryCategories(moduleId: string) {
+    return this.request<{ data: GlossaryCategory[] }>(`/glossary/${moduleId}/categories`);
+  }
+
+  async createGlossaryCategory(moduleId: string, data: { name: string }) {
+    return this.request<GlossaryCategory>(`/glossary/${moduleId}/categories`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getGlossaryEntries(moduleId: string, params?: {
+    status?: import('@ako/shared').GlossaryEntryStatus;
+    letter?: string;
+    category_id?: string;
+  }) {
+    return this.request<{ data: GlossaryEntry[] }>(
+      `/glossary/${moduleId}/entries${this.toQueryString(params)}`
+    );
+  }
+
+  async createGlossaryEntry(moduleId: string, data: {
+    term: string;
+    definition: string;
+    category_id?: string;
+  }) {
+    return this.request<GlossaryEntry>(`/glossary/${moduleId}/entries`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async updateGlossaryEntry(moduleId: string, entryId: string, data: {
+    term?: string;
+    definition?: string;
+    status?: import('@ako/shared').GlossaryEntryStatus;
+    category_id?: string;
+  }) {
+    return this.request<GlossaryEntry>(`/glossary/${moduleId}/entries/${entryId}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async deleteGlossaryEntry(moduleId: string, entryId: string) {
+    return this.request<void>(`/glossary/${moduleId}/entries/${entryId}`, { method: 'DELETE' });
+  }
+
+  async importGlossaryCSV(moduleId: string, csv: string) {
+    return this.request<{ imported: number }>(`/glossary/${moduleId}/import`, {
+      method: 'POST', body: JSON.stringify({ csv }),
+    });
+  }
+
+  // ── Phase 11: Workshops ──────────────────────────────────────────────────────
+
+  async getWorkshop(moduleId: string) {
+    return this.request<Workshop>(`/workshops/${moduleId}`);
+  }
+
+  async upsertWorkshop(moduleId: string, data: {
+    submission_end_at?: string;
+    assessment_end_at?: string;
+    peer_count?: number;
+    submission_weight?: number;
+    assessment_weight?: number;
+    self_assessment?: boolean;
+    allocation_strategy?: import('@ako/shared').WorkshopAllocationStrategy;
+  }) {
+    return this.request<Workshop>(`/workshops/${moduleId}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+  }
+
+  async submitWorkshop(moduleId: string, data: { title: string; body: Record<string, unknown> }) {
+    return this.request<WorkshopSubmission>(`/workshops/${moduleId}/submissions`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getWorkshopSubmissions(moduleId: string) {
+    return this.request<{ data: WorkshopSubmission[] }>(`/workshops/${moduleId}/submissions`);
+  }
+
+  async getWorkshopAssessments(moduleId: string) {
+    return this.request<{ data: WorkshopAssessment[] }>(`/workshops/${moduleId}/assessments`);
+  }
+
+  async submitWorkshopAssessment(moduleId: string, submissionId: string, data: {
+    grades: Record<string, unknown>;
+    feedback?: string;
+  }) {
+    return this.request<WorkshopAssessment>(
+      `/workshops/${moduleId}/assessments/${submissionId}`, {
+        method: 'POST', body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async advanceWorkshopPhase(moduleId: string) {
+    return this.request<Workshop>(`/workshops/${moduleId}/advance`, { method: 'POST' });
+  }
+
+  async allocateWorkshopPeers(moduleId: string) {
+    return this.request<{ allocated: number }>(`/workshops/${moduleId}/allocate`, { method: 'POST' });
+  }
+
+  // ── Phase 11: Wikis ──────────────────────────────────────────────────────────
+
+  async getWiki(moduleId: string) {
+    return this.request<Wiki>(`/wikis/${moduleId}`);
+  }
+
+  async getWikiPages(moduleId: string) {
+    return this.request<{ data: WikiPage[] }>(`/wikis/${moduleId}/pages`);
+  }
+
+  async createWikiPage(moduleId: string, data: { title: string; body: Record<string, unknown> }) {
+    return this.request<WikiPage>(`/wikis/${moduleId}/pages`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getWikiPage(moduleId: string, pageId: string) {
+    return this.request<WikiPage>(`/wikis/${moduleId}/pages/${pageId}`);
+  }
+
+  async updateWikiPage(moduleId: string, pageId: string, data: {
+    title?: string;
+    body?: Record<string, unknown>;
+  }) {
+    return this.request<WikiPage>(`/wikis/${moduleId}/pages/${pageId}`, {
+      method: 'PATCH', body: JSON.stringify(data),
+    });
+  }
+
+  async getWikiPageHistory(moduleId: string, pageId: string) {
+    return this.request<{ data: WikiPageVersion[] }>(
+      `/wikis/${moduleId}/pages/${pageId}/history`
+    );
+  }
+
+  async revertWikiPage(moduleId: string, pageId: string, versionId: string) {
+    return this.request<WikiPage>(
+      `/wikis/${moduleId}/pages/${pageId}/revert/${versionId}`, { method: 'POST' }
+    );
+  }
+
+  async lockWikiPage(moduleId: string, pageId: string, locked: boolean) {
+    return this.request<WikiPage>(`/wikis/${moduleId}/pages/${pageId}/lock`, {
+      method: 'POST', body: JSON.stringify({ locked }),
+    });
+  }
+
+  // ── Phase 11: Attendance ─────────────────────────────────────────────────────
+
+  async getAttendanceSessions(moduleId: string) {
+    return this.request<{ data: AttendanceSession[] }>(`/attendance/${moduleId}/sessions`);
+  }
+
+  async createAttendanceSession(moduleId: string, data: {
+    session_date: string;
+    description?: string;
+    calendar_event_id?: string;
+  }) {
+    return this.request<AttendanceSession>(`/attendance/${moduleId}/sessions`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+  }
+
+  async getAttendanceRecords(moduleId: string, sessionId: string) {
+    return this.request<{ data: AttendanceRecord[] }>(
+      `/attendance/${moduleId}/sessions/${sessionId}/records`
+    );
+  }
+
+  async bulkUpsertAttendance(moduleId: string, sessionId: string, data: {
+    records: Array<{ user_id: string; status: import('@ako/shared').AttendanceStatus; notes?: string }>;
+  }) {
+    return this.request<{ data: AttendanceRecord[] }>(
+      `/attendance/${moduleId}/sessions/${sessionId}/records`, {
+        method: 'PUT', body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async selfReportAttendance(moduleId: string, sessionId: string, data: {
+    status: import('@ako/shared').AttendanceStatus;
+  }) {
+    return this.request<AttendanceRecord>(
+      `/attendance/${moduleId}/sessions/${sessionId}/self`, {
+        method: 'POST', body: JSON.stringify(data),
+      }
+    );
+  }
+
+  async getAttendanceSummary(moduleId: string) {
+    return this.request<{ data: AttendanceSummary[] }>(`/attendance/${moduleId}/summary`);
   }
 }
