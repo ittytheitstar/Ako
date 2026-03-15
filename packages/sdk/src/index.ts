@@ -20,6 +20,8 @@ import type {
   CompetencyFramework, Competency, CourseCompetencyLink, ActivityCompetencyLink,
   CompetencyEvidence, CompetencyProfile, Programme, ProgrammeCompetencyReport,
   ProficiencyExpectation, ProficiencyRating,
+  KanbanBoard, KanbanBoardTemplate, KanbanLane, KanbanCard, KanbanCardTimeLog,
+  KanbanBoardMember, BoardRole, Issue, IssueComment, UserStory,
 } from '@ako/shared';
 
 export interface AkoClientOptions {
@@ -1823,5 +1825,263 @@ export class AkoClient {
       `/programmes/${id}/report/refresh`,
       { method: 'POST' }
     );
+  }
+
+  // ── Phase 14: Kanban Boards ────────────────────────────────────────────────
+
+  async getKanbanBoards(params?: { course_id?: string; status?: string; owner_user_id?: string }) {
+    return this.request<{ data: KanbanBoard[] }>(`/kanban-boards${this.toQueryString(params)}`);
+  }
+
+  async createKanbanBoard(data: {
+    course_id: string;
+    cohort_id?: string;
+    owner_user_id?: string;
+    title: string;
+    description?: string;
+    template_id?: string;
+    settings?: Record<string, unknown>;
+  }) {
+    return this.request<KanbanBoard>('/kanban-boards', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getKanbanBoard(id: string) {
+    return this.request<KanbanBoard & { lanes: KanbanLane[]; cards: KanbanCard[] }>(`/kanban-boards/${id}`);
+  }
+
+  async updateKanbanBoard(id: string, data: Partial<Pick<KanbanBoard, 'title' | 'description' | 'settings'>>) {
+    return this.request<KanbanBoard>(`/kanban-boards/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async archiveKanbanBoard(id: string) {
+    return this.request<KanbanBoard>(`/kanban-boards/${id}/archive`, { method: 'POST' });
+  }
+
+  async refreshKanbanBoard(id: string, data: { course_id: string; cohort_id?: string; title?: string }) {
+    return this.request<KanbanBoard>(`/kanban-boards/${id}/refresh`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async deleteKanbanBoard(id: string) {
+    return this.request<void>(`/kanban-boards/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 14: Kanban Lanes ─────────────────────────────────────────────────
+
+  async getKanbanLanes(boardId: string) {
+    return this.request<{ data: KanbanLane[] }>(`/kanban-boards/${boardId}/lanes`);
+  }
+
+  async createKanbanLane(boardId: string, data: {
+    title: string;
+    color?: string;
+    wip_limit?: number;
+    is_done_lane?: boolean;
+    position?: number;
+  }) {
+    return this.request<KanbanLane>(`/kanban-boards/${boardId}/lanes`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async reorderKanbanLanes(boardId: string, laneIds: string[]) {
+    return this.request<{ data: KanbanLane[] }>(`/kanban-boards/${boardId}/lanes/reorder`, {
+      method: 'PUT', body: JSON.stringify({ lane_ids: laneIds }),
+    });
+  }
+
+  async updateKanbanLane(id: string, data: Partial<Pick<KanbanLane, 'title' | 'color' | 'wip_limit' | 'is_done_lane' | 'position'>>) {
+    return this.request<KanbanLane>(`/kanban-lanes/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteKanbanLane(id: string) {
+    return this.request<void>(`/kanban-lanes/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 14: Kanban Cards ─────────────────────────────────────────────────
+
+  async getKanbanCards(boardId: string) {
+    return this.request<{ data: KanbanCard[] }>(`/kanban-boards/${boardId}/cards`);
+  }
+
+  async createKanbanCard(boardId: string, data: {
+    lane_id: string;
+    title: string;
+    description?: string;
+    assignees?: string[];
+    start_date?: string;
+    end_date?: string;
+    tags?: string[];
+    flags?: string[];
+    priority?: KanbanCard['priority'];
+    story_points?: number;
+    issue_id?: string;
+    user_story_id?: string;
+  }) {
+    return this.request<KanbanCard>(`/kanban-boards/${boardId}/cards`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getKanbanCard(id: string) {
+    return this.request<KanbanCard>(`/kanban-cards/${id}`);
+  }
+
+  async updateKanbanCard(id: string, data: Partial<Omit<KanbanCard, 'card_id' | 'board_id' | 'tenant_id' | 'created_at' | 'updated_at'>>) {
+    return this.request<KanbanCard>(`/kanban-cards/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async moveKanbanCard(id: string, data: { lane_id: string; position?: number; force?: boolean }) {
+    return this.request<KanbanCard>(`/kanban-cards/${id}/move`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async archiveKanbanCard(id: string) {
+    return this.request<KanbanCard>(`/kanban-cards/${id}/archive`, { method: 'POST' });
+  }
+
+  async deleteKanbanCard(id: string) {
+    return this.request<void>(`/kanban-cards/${id}`, { method: 'DELETE' });
+  }
+
+  async logKanbanCardTime(id: string, data: { minutes: number; note?: string; logged_at?: string }) {
+    return this.request<KanbanCardTimeLog>(`/kanban-cards/${id}/time-log`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getKanbanCardTimeLogs(id: string) {
+    return this.request<{ data: KanbanCardTimeLog[] }>(`/kanban-cards/${id}/time-logs`);
+  }
+
+  // ── Phase 14: Board Members ────────────────────────────────────────────────
+
+  async getKanbanBoardMembers(boardId: string) {
+    return this.request<{ data: KanbanBoardMember[] }>(`/kanban-boards/${boardId}/members`);
+  }
+
+  async addKanbanBoardMember(boardId: string, data: { user_id: string; board_role?: BoardRole }) {
+    return this.request<KanbanBoardMember>(`/kanban-boards/${boardId}/members`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateKanbanBoardMember(id: string, board_role: BoardRole) {
+    return this.request<KanbanBoardMember>(`/kanban-board-members/${id}`, { method: 'PATCH', body: JSON.stringify({ board_role }) });
+  }
+
+  async removeKanbanBoardMember(id: string) {
+    return this.request<void>(`/kanban-board-members/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 14: Board Templates ──────────────────────────────────────────────
+
+  async getBoardTemplates() {
+    return this.request<{ data: KanbanBoardTemplate[] }>('/board-templates');
+  }
+
+  async createBoardTemplate(data: {
+    name: string;
+    description?: string;
+    lane_definitions?: KanbanBoardTemplate['lane_definitions'];
+    seed_cards?: unknown[];
+  }) {
+    return this.request<KanbanBoardTemplate>('/board-templates', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getBoardTemplate(id: string) {
+    return this.request<KanbanBoardTemplate>(`/board-templates/${id}`);
+  }
+
+  async updateBoardTemplate(id: string, data: Partial<Pick<KanbanBoardTemplate, 'name' | 'description' | 'lane_definitions' | 'seed_cards'>>) {
+    return this.request<KanbanBoardTemplate>(`/board-templates/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteBoardTemplate(id: string) {
+    return this.request<void>(`/board-templates/${id}`, { method: 'DELETE' });
+  }
+
+  async instantiateBoardTemplate(id: string, data: {
+    course_id: string;
+    cohort_id?: string;
+    user_ids?: string[];
+    title_pattern?: string;
+  }) {
+    return this.request<{ created: number; boards: KanbanBoard[] }>(
+      `/board-templates/${id}/instantiate`, { method: 'POST', body: JSON.stringify(data) }
+    );
+  }
+
+  // ── Phase 14: Issues ──────────────────────────────────────────────────────
+
+  async getIssues(params?: { course_id?: string; status?: string; type?: string; assignee?: string; board_id?: string; user_story_id?: string }) {
+    return this.request<{ data: Issue[] }>(`/issues${this.toQueryString(params)}`);
+  }
+
+  async createIssue(data: {
+    course_id: string;
+    board_id?: string;
+    user_story_id?: string;
+    title: string;
+    description?: string;
+    type?: Issue['type'];
+    priority?: Issue['priority'];
+    assignees?: string[];
+    labels?: string[];
+    due_date?: string;
+  }) {
+    return this.request<Issue>('/issues', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getIssue(id: string) {
+    return this.request<Issue & { comments: IssueComment[] }>(`/issues/${id}`);
+  }
+
+  async updateIssue(id: string, data: Partial<Pick<Issue, 'title' | 'description' | 'type' | 'status' | 'priority' | 'assignees' | 'labels' | 'due_date' | 'user_story_id' | 'board_id'>>) {
+    return this.request<Issue>(`/issues/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteIssue(id: string) {
+    return this.request<void>(`/issues/${id}`, { method: 'DELETE' });
+  }
+
+  async getIssueComments(issueId: string) {
+    return this.request<{ data: IssueComment[] }>(`/issues/${issueId}/comments`);
+  }
+
+  async addIssueComment(issueId: string, body: string) {
+    return this.request<IssueComment>(`/issues/${issueId}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+  }
+
+  async updateIssueComment(id: string, body: string) {
+    return this.request<IssueComment>(`/issue-comments/${id}`, { method: 'PATCH', body: JSON.stringify({ body }) });
+  }
+
+  async deleteIssueComment(id: string) {
+    return this.request<void>(`/issue-comments/${id}`, { method: 'DELETE' });
+  }
+
+  // ── Phase 14: User Stories ────────────────────────────────────────────────
+
+  async getUserStories(params?: { course_id?: string; status?: string; assignee?: string }) {
+    return this.request<{ data: UserStory[] }>(`/user-stories${this.toQueryString(params)}`);
+  }
+
+  async createUserStory(data: {
+    course_id: string;
+    title: string;
+    as_a?: string;
+    i_want?: string;
+    so_that?: string;
+    acceptance_criteria?: string;
+    priority?: UserStory['priority'];
+    story_points?: number;
+    assignees?: string[];
+    labels?: string[];
+    competency_id?: string;
+  }) {
+    return this.request<UserStory>('/user-stories', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getUserStory(id: string) {
+    return this.request<UserStory & { issues: Pick<Issue, 'issue_id' | 'title' | 'status' | 'type' | 'priority'>[]; cards: Pick<KanbanCard, 'card_id' | 'title' | 'priority' | 'archived'>[] }>(`/user-stories/${id}`);
+  }
+
+  async updateUserStory(id: string, data: Partial<Omit<UserStory, 'story_id' | 'tenant_id' | 'created_at' | 'updated_at'>>) {
+    return this.request<UserStory>(`/user-stories/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteUserStory(id: string) {
+    return this.request<void>(`/user-stories/${id}`, { method: 'DELETE' });
   }
 }

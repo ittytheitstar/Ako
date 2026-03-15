@@ -1366,3 +1366,169 @@ export interface ProgrammeCompetencyReport {
   proficient_pct: number;
   refreshed_at: string;
 }
+
+// ─── Phase 14 – Kanban, Issues & User Stories ─────────────────────────────────
+
+export type BoardRole = 'viewer' | 'contributor' | 'member' | 'manager' | 'admin';
+export type BoardStatus = 'active' | 'archived';
+export type CardPriority = 'low' | 'medium' | 'high' | 'critical';
+export type IssueType = 'bug' | 'feature' | 'improvement' | 'task' | 'question';
+export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'wont_fix';
+export type StoryStatus = 'draft' | 'ready' | 'in_progress' | 'done' | 'rejected';
+
+export interface KanbanBoardTemplate {
+  template_id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  lane_definitions: Array<{
+    title: string;
+    color?: string;
+    wip_limit?: number;
+    is_done_lane?: boolean;
+  }>;
+  seed_cards: unknown[];
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KanbanBoard {
+  board_id: string;
+  tenant_id: string;
+  course_id: string;
+  cohort_id?: string;
+  owner_user_id?: string;
+  owner_display_name?: string;
+  title: string;
+  description?: string;
+  template_id?: string;
+  status: BoardStatus;
+  settings: Record<string, unknown>;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  archived_at?: string;
+  lane_count?: number;
+  card_count?: number;
+}
+
+export interface KanbanLane {
+  lane_id: string;
+  board_id: string;
+  tenant_id: string;
+  title: string;
+  position: number;
+  color: string;
+  wip_limit: number;
+  is_done_lane: boolean;
+  created_at: string;
+  updated_at: string;
+  card_count?: number;
+}
+
+export interface KanbanCard {
+  card_id: string;
+  board_id: string;
+  lane_id: string;
+  tenant_id: string;
+  title: string;
+  description?: string;
+  assignees: string[];
+  assignee_names?: string[];
+  start_date?: string;
+  end_date?: string;
+  time_worked_minutes: number;
+  tags: string[];
+  flags: string[];
+  position: number;
+  priority: CardPriority;
+  story_points?: number;
+  issue_id?: string;
+  user_story_id?: string;
+  archived: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KanbanCardTimeLog {
+  time_log_id: string;
+  card_id: string;
+  tenant_id: string;
+  user_id: string;
+  user_display_name?: string;
+  minutes: number;
+  logged_at: string;
+  note?: string;
+}
+
+export interface KanbanBoardMember {
+  member_id: string;
+  board_id: string;
+  tenant_id: string;
+  user_id: string;
+  user_display_name?: string;
+  board_role: BoardRole;
+  added_by?: string;
+  added_at: string;
+}
+
+export interface Issue {
+  issue_id: string;
+  tenant_id: string;
+  course_id: string;
+  board_id?: string;
+  user_story_id?: string;
+  user_story_title?: string;
+  title: string;
+  description?: string;
+  type: IssueType;
+  status: IssueStatus;
+  priority: CardPriority;
+  reporter_id?: string;
+  reporter_name?: string;
+  assignees: string[];
+  assignee_names?: string[];
+  labels: string[];
+  due_date?: string;
+  resolved_at?: string;
+  comment_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IssueComment {
+  comment_id: string;
+  issue_id: string;
+  tenant_id: string;
+  user_id: string;
+  user_display_name?: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserStory {
+  story_id: string;
+  tenant_id: string;
+  course_id: string;
+  title: string;
+  as_a?: string;
+  i_want?: string;
+  so_that?: string;
+  acceptance_criteria?: string;
+  priority: CardPriority;
+  status: StoryStatus;
+  story_points?: number;
+  assignees: string[];
+  assignee_names?: string[];
+  labels: string[];
+  competency_id?: string;
+  competency_short_name?: string;
+  issue_count?: number;
+  card_count?: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
