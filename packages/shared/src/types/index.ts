@@ -1248,3 +1248,121 @@ export interface CourseTemplate {
   created_at: string;
   updated_at: string;
 }
+
+// ─── Phase 13 – Competencies, Outcomes & Programme-Level Tracking ─────────────
+
+export type CompetencySource = 'manual' | 'csv' | 'case';
+export type ProficiencyRating = 'not_yet' | 'beginning' | 'developing' | 'proficient' | 'advanced';
+export type ProficiencyExpectation = 'introduced' | 'developing' | 'demonstrated' | 'mastered';
+export type EvidenceSourceType = 'assignment' | 'quiz' | 'teacher_judgment' | 'portfolio';
+export type RatingSource = 'automatic' | 'teacher';
+export type CompetencyAggregationStrategy = 'latest' | 'highest' | 'average' | 'manual';
+
+export interface CompetencyFramework {
+  framework_id: string;
+  tenant_id: string;
+  name: string;
+  version: string;
+  source: CompetencySource;
+  description?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  competency_count?: number;
+}
+
+export interface Competency {
+  competency_id: string;
+  framework_id: string;
+  tenant_id: string;
+  parent_id?: string;
+  short_name: string;
+  description?: string;
+  idnumber?: string;
+  level: number;
+  created_at: string;
+  updated_at: string;
+  children?: Competency[];
+}
+
+export interface CourseCompetencyLink {
+  link_id: string;
+  tenant_id: string;
+  course_id: string;
+  competency_id: string;
+  competency_short_name?: string;
+  proficiency_expectation: ProficiencyExpectation;
+  created_at: string;
+}
+
+export interface ActivityCompetencyLink {
+  link_id: string;
+  tenant_id: string;
+  module_id: string;
+  competency_id: string;
+  competency_short_name?: string;
+  created_at: string;
+}
+
+export interface CompetencyEvidence {
+  evidence_id: string;
+  tenant_id: string;
+  competency_id: string;
+  competency_short_name?: string;
+  user_id: string;
+  user_name?: string;
+  course_id?: string;
+  source_type: EvidenceSourceType;
+  source_id?: string;
+  proficiency_rating: ProficiencyRating;
+  rating_source: RatingSource;
+  evidence_date: string;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+}
+
+export interface CompetencyProfile {
+  profile_id: string;
+  tenant_id: string;
+  user_id: string;
+  competency_id: string;
+  competency_short_name?: string;
+  framework_id?: string;
+  proficiency_rating: ProficiencyRating;
+  aggregation_strategy: CompetencyAggregationStrategy;
+  evidence_count: number;
+  last_evidence_at?: string;
+  updated_at: string;
+}
+
+export interface Programme {
+  programme_id: string;
+  tenant_id: string;
+  name: string;
+  code: string;
+  description?: string;
+  framework_id?: string;
+  framework_name?: string;
+  course_ids: string[];
+  settings: Record<string, unknown>;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProgrammeCompetencyReport {
+  report_id: string;
+  tenant_id: string;
+  programme_id: string;
+  competency_id: string;
+  competency_short_name?: string;
+  total_learners: number;
+  not_yet_count: number;
+  beginning_count: number;
+  developing_count: number;
+  proficient_count: number;
+  advanced_count: number;
+  proficient_pct: number;
+  refreshed_at: string;
+}
